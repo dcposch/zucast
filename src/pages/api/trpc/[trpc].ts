@@ -2,13 +2,12 @@
  * This is the API-handler of your app that contains all your API routes.
  * On a bigger app, you will probably want to split this file up into multiple files.
  */
+import { auth } from "@/server/auth";
+import { feed } from "@/server/feed";
+import { StoredAction, action } from "@/common/model";
+import { publicProcedure, router } from "@/server/trpc";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
-import { publicProcedure, router } from "@/server/trpc";
-import { ZucastFeed } from "@/server/feed";
-import { action } from "@/server/model";
-
-const feed = new ZucastFeed();
 
 const appRouter = router({
   greeting: publicProcedure
@@ -29,9 +28,12 @@ const appRouter = router({
         pcd: z.string(),
       })
     )
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
       const timeMs = Date.now();
-      feed.addStoredAction({ ...input, timeMs, type: "addKey" });
+      const sa: StoredAction = { ...input, timeMs, type: "addKey" };
+      const user = await feed.verifyAndAdd(sa);
+      const token = auth.createToken(user.uid);
+      return token;
     }),
 
   act: publicProcedure
