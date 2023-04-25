@@ -46,8 +46,7 @@ const appRouter = router({
     )
     .mutation(({ input }) => {
       const timeMs = Date.now();
-      // TODO: validate and add
-      feed.addStoredAction({ ...input, timeMs, type: "act" });
+      feed.verifyAndAdd({ ...input, timeMs, type: "act" });
       return "ok";
     }),
 
@@ -83,5 +82,8 @@ export type AppRouter = typeof appRouter;
 // export API handler
 export default trpcNext.createNextApiHandler({
   router: appRouter,
+  onError: (ctx) => {
+    console.error(`[TRPC] error`, ctx.error);
+  },
   createContext: () => ({}),
 });

@@ -15,29 +15,32 @@ export class ZucastFeed {
   }
 
   /** Adds a single action after verifying its signature. */
-  async verifyAndAdd(sa: StoredAction): User {
+  async verifyAndAdd(sa: StoredAction): Promise<User> {
     const { type } = sa;
     switch (type) {
-      case "act":
+      case "act": {
         const user = this.users[sa.uid];
-        if (!user) throw new Error("User not found");
+        if (!user) throw new Error("[FEED] action uid not found");
         // TODO: verify signature
         // TODO: per-user rate limit
         this.executeUserAction(user, sa.action, sa.timeMs);
-        break;
+        return user;
+      }
 
-      case "addKey":
+      case "addKey": {
         // TODO: parse and verify PCD
-        this.users.push({
+        const user: User = {
           uid: this.users.length,
           nullifierHash: sa.pcd,
           pubKeys: [],
           posts: [],
-        });
-        break;
+        };
+        this.users.push(user);
+        return user;
+      }
 
       default:
-        console.log(`[FEED] ignoring stored action ${type}`);
+        throw new Error(`[FEED] invalid stored action ${type}`);
     }
   }
 
@@ -73,4 +76,12 @@ export class ZucastFeed {
   }
 }
 
-export const feed = new ZucastFeed();
+// NextJS workaround.
+export const feed = (function () {
+  const key = "ZucastFeed";
+  let auth = (global as any)[key] as ZucastFeed;
+  if (!auth) {
+    auth = (global as any)[key] = new ZucastFeed();
+  }
+  return auth;
+})();

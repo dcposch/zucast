@@ -1,53 +1,36 @@
 import { trpc } from "@/client/trpc";
-import {
-  KeyPair,
-  exportKeypair,
-  generateKeypair,
-  generateSigningKey,
-  importKeypair,
-  tryImportKeypair,
-} from "@/common/crypto";
-import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
+import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
+import { KeyPair } from "@/common/crypto";
+import { useEffect } from "react";
 import { ZupassLoginButton, useZupass } from "zukit";
-import { generateMessageHash } from "@pcd/semaphore-group-pcd";
 
-export default function LoginPage() {
+export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
   const addKey = trpc.addKey.useMutation();
 
-  // Generate an ECDSA (P256) signing keypair, plus BJJ hash of the public key
-  const [signingKey, setSigningKey] = useState<KeyPair>();
+  // Delete stale cookies, if any
   useEffect(() => {
-    console.log(`[LOGIN] loading or creating signing key`);
-    (async () => {
-      let storedJson = localStorage["signingKey"];
-      let keypair = await tryImportKeypair(storedJson);
-      if (keypair == null) {
-        keypair = await generateKeypair();
-        localStorage["signingKey"] = await exportKeypair(keypair);
-      }
-      setSigningKey(keypair);
-    })();
-  }, [setSigningKey]);
+    document.cookie = `${COOKIE_ZUCAST_TOKEN}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
+  }, []);
 
   // Once we have a proof from the Zuzalu Passport, upload our signing key
   useEffect(() => {
     if (zupass.status !== "logged-in") return;
+    console.log(`[LOGIN] uploading signing key`);
     addKey.mutate({ pcd: JSON.stringify(zupass.serializedPCD) });
-  }, [addKey, zupass]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zupass.status]);
 
+  // Once that succeeds, set the zucastToken cookie, giving us read access
   useEffect(() => {
     if (addKey.isSuccess) {
       const token = addKey.data;
-      // Add token as the zucastToken cookie
-      document.cookie = `zucastToken=${token}; path=/`;
-      // Redirect to the homepage
-      redirect("/");
+      // Add token as a cookie
+      document.cookie = `${COOKIE_ZUCAST_TOKEN}=${token}; path=/`;
+      // Load the feed
+      window.location.reload();
     }
   }, [addKey]);
-
-  if (!signingKey) return null;
 
   return (
     <div>

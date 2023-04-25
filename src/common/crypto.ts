@@ -1,4 +1,5 @@
 import { generateMessageHash } from "@pcd/semaphore-group-pcd";
+import { useEffect, useState } from "react";
 
 /** An ECDSA (P256) signing keypair. Pubkey is public, privkey stays in localStorage. */
 export interface KeyPair {
@@ -11,6 +12,27 @@ export interface KeyPair {
 }
 
 const p256 = { name: "ECDSA", namedCurve: "P-256" };
+
+/** Load an ECDSA keypair from localStorage, or generate and save. */
+export function useSigningKey() {
+  const [signingKey, setSigningKey] = useState<KeyPair>();
+
+  // Generate an ECDSA (P256) signing keypair, plus BJJ hash of the public key
+  useEffect(() => {
+    console.log(`[CRYPTO] loading or creating signing key`);
+    (async () => {
+      let storedJson = localStorage["signingKey"];
+      let keypair = await tryImportKeypair(storedJson);
+      if (keypair == null) {
+        keypair = await generateKeypair();
+        localStorage["signingKey"] = await exportKeypair(keypair);
+      }
+      setSigningKey(keypair);
+    })();
+  }, [setSigningKey]);
+
+  return signingKey;
+}
 
 /** Generates an ECDSA signing keypair.  */
 export async function generateKeypair(): Promise<KeyPair> {

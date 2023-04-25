@@ -1,47 +1,33 @@
-import { KeyPair, tryImportKeypair } from "@/common/crypto";
+import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
+import { useSigningKey } from "@/common/crypto";
+import { FeedScreen } from "@/components/FeedScreen";
+import { LoginScreen } from "@/components/LoginScreen";
 import { auth } from "@/server/auth";
 import { GetServerSideProps } from "next";
-import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function HomePage({ loggedInUid }: AuthProps) {
-  // Generate an ECDSA (P256) signing keypair, plus BJJ hash of the public key
-  const [signingKey, setSigningKey] = useState<KeyPair>();
-  useEffect(() => {
-    console.log(`[HOME] loading signing key`);
-    let storedJson = localStorage["signingKey"];
-    tryImportKeypair(storedJson).then((k: KeyPair | undefined) => {
-      if (k == null) {
-        console.error(`[HOME] no signing key found`);
-        redirect("/login");
-      }
-      setSigningKey(k);
-    });
-  }, [setSigningKey]);
+  const signingKey = useSigningKey();
 
-  if (loggedInUid == null) {
-    return redirect("/login");
+  if (signingKey == null) {
+    // First, wait for the signing key to generate (nearly instant)
+    return null;
+  } else if (loggedInUid == null) {
+    // Then, log in, associating the pubkey with our anonymous nullifierHash
+    return <LoginScreen signingKey={signingKey} />;
+  } else {
+    // Finally, show the feed
+    return <FeedScreen loggedInUid={loggedInUid} signingKey={signingKey} />;
   }
-
-  if (signingKey == null) return null;
-
-  return (
-    <>
-      <h1>Zucast</h1>
-      <p>Welcome, {loggedInUid}</p>
-      <p>Pubkey {signingKey.pubKeyHex}</p>
-    </>
-  );
 }
 
 interface AuthProps {
-  loggedInUid?: number;
+  loggedInUid: number | null;
 }
 
 export const getServerSideProps: GetServerSideProps<AuthProps> = async (
   context
 ) => {
-  const token = context.req.cookies["zucastToken"];
-  const loggedInUid = auth.authenticate(token);
+  const token = context.req.cookies[COOKIE_ZUCAST_TOKEN];
+  let loggedInUid = auth.authenticate(token);
   return { props: { loggedInUid } };
 };
