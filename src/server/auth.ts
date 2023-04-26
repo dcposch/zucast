@@ -1,12 +1,26 @@
-import { z } from "zod";
-import { feed } from "./feed";
+import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
 import { User } from "@/common/model";
 import crypto from "crypto";
+import { GetServerSidePropsContext } from "next";
+import { z } from "zod";
+import { feed } from "./feed";
 
 interface Token {
   cookie: string;
   uid: number;
   createdMs: number;
+}
+
+/** Cookie authentication */
+export function authenticateRequest(
+  req: GetServerSidePropsContext["req"]
+): User | null {
+  const token = req.cookies[COOKIE_ZUCAST_TOKEN];
+  const loggedInUid = auth.authenticate(token);
+  if (loggedInUid == null) return null;
+  const { uid, nullifierHash, profile } = feed.users[loggedInUid];
+  const user: User = { uid, nullifierHash, profile };
+  return user;
 }
 
 /** Cookie authentication for view only. All actions are individually signed. */

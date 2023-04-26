@@ -1,14 +1,19 @@
-import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
+import { SelfContext } from "@/client/self";
 import { useSigningKey } from "@/common/crypto";
-import { User } from "@/common/model";
+import { Post, User } from "@/common/model";
 import { FeedScreen } from "@/components/FeedScreen";
 import { LoginScreen } from "@/components/LoginScreen";
-import { auth } from "@/server/auth";
+import { authenticateRequest } from "@/server/auth";
 import { feed } from "@/server/feed";
 import { GetServerSideProps } from "next";
 import { useZupass } from "zukit";
 
-export default function HomePage({ user }: AuthProps) {
+interface HomePageProps {
+  user: User | null;
+  feedPosts: Post[];
+}
+
+export default function HomePage({ user, feedPosts }: HomePageProps) {
   const signingKey = useSigningKey();
   const [zupass] = useZupass();
 
@@ -20,19 +25,18 @@ export default function HomePage({ user }: AuthProps) {
     return <LoginScreen signingKey={signingKey} />;
   } else {
     // Finally, show the feed
-    return <FeedScreen user={user} signingKey={signingKey} />;
+    return (
+      <SelfContext.Provider value={{ user, signingKey }}>
+        <FeedScreen posts={feedPosts} />
+      </SelfContext.Provider>
+    );
   }
 }
 
-interface AuthProps {
-  user: User | null;
-}
-
-export const getServerSideProps: GetServerSideProps<AuthProps> = async (
+export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
   context
 ) => {
-  const token = context.req.cookies[COOKIE_ZUCAST_TOKEN];
-  const loggedInUid = auth.authenticate(token);
-  const user = loggedInUid == null ? null : feed.users[loggedInUid];
-  return { props: { user } };
+  const user = authenticateRequest(context.req);
+  const feedPosts = user == null ? [] : feed.genGlobalFeed();
+  return { props: { user, feedPosts } };
 };

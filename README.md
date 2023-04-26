@@ -1,20 +1,10 @@
-# Next.js + tRPC
+<img width="502" alt="image" src="https://user-images.githubusercontent.com/169280/234597322-de594a50-8dfa-4a89-a0bc-9e6d58ba7d34.png">
 
-This example shows how you can make a typed query using a minimal implementation of tRPC following [`this as a reference`](https://trpc.io/docs/nextjs/introduction).
-
-## Setup
-
-```bash
-npx create-next-app --example https://github.com/trpc/trpc --example-path examples/next-minimal-starter trpc-minimal-starter
-cd trpc-minimal-starter
-npm i
-npm run dev
-```
+coming soon
 
 ## Development
 
-### Start project
-
-```bash
-npm run dev        # starts next.js
+```
+npm i
+npm run dev
 ```

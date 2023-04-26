@@ -11,7 +11,7 @@ export interface KeyPair {
   pubKeyHash: bigint;
 }
 
-const p256 = { name: "ECDSA", namedCurve: "P-256" };
+const p256 = { name: "ECDSA", namedCurve: "P-256", hash: "SHA-256" };
 
 /** Load an ECDSA keypair from localStorage, or generate and save. */
 export function useSigningKey() {
@@ -84,6 +84,13 @@ async function fromPair(pair: CryptoKeyPair): Promise<KeyPair> {
 export async function importPubKey(hex: string): Promise<CryptoKey> {
   const buf = Buffer.from(hex, "hex");
   return crypto.subtle.importKey("raw", buf, p256, true, ["verify"]);
+}
+
+/** Returns a hex-encoded ECDSA P256 signature. */
+export async function sign(privateKey: CryptoKey, message: string) {
+  const msg = new TextEncoder().encode(message);
+  const signature = await crypto.subtle.sign(p256, privateKey, msg);
+  return Buffer.from(signature).toString("hex");
 }
 
 /** Verifies a ECDSA P256 signature. */

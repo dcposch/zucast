@@ -15,7 +15,7 @@ export interface User {
 export interface Post {
   id: number;
   /** User who posted this */
-  uid: number;
+  user: User;
   /** Time, in Unix ms */
   timeMs: number;
   /** Post content */

@@ -36,7 +36,9 @@ export class ZucastFeed {
 
   /** Generates a feed of recent posts */
   genGlobalFeed() {
-    return this.posts.slice(-100).reverse();
+    const ret = this.posts.slice(-100).reverse();
+    console.log(`[FEED] generated global feed, ${ret.length} posts`);
+    return ret;
   }
 
   /** Performs an action after validation, including verifying its signature. */
@@ -132,7 +134,7 @@ export class ZucastFeed {
         }
         const post = {
           id,
-          uid: user.uid,
+          user: excerptUser(user),
           timeMs: timeMs,
           content: action.content,
           rootID,
@@ -150,6 +152,11 @@ export class ZucastFeed {
         console.warn(`[FEED] ignoring action ${type}`);
     }
   }
+}
+
+function excerptUser(user: FeedUser): User {
+  const { uid, nullifierHash, profile } = user;
+  return { uid, nullifierHash, profile };
 }
 
 // NextJS workaround.

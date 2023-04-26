@@ -7,6 +7,7 @@ import { useZupass } from "zukit";
 import { LoginButton } from "./LoginButton";
 import { Container } from "./Container";
 import Head from "next/head";
+import { H1 } from "./typography";
 
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
@@ -48,7 +49,7 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
           <div className="-my-3">
             <Image src="/logo-160.png" width={80} height={80} alt="Logo" />
           </div>
-          <h1 className="text-2xl font-bold">Zucast</h1>
+          <H1>Zucast</H1>
           <p>
             A zero-knowledge forum,
             <br />
