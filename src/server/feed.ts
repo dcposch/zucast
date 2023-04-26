@@ -1,4 +1,7 @@
-import { EXTERNAL_NULLIFIER } from "@/common/constants";
+import {
+  EXTERNAL_NULLIFIER,
+  RATE_LIMIT_ACTIONS_PER_HOUR,
+} from "@/common/constants";
 import {
   SemaphoreGroupPCDPackage,
   generateMessageHash,
@@ -19,32 +22,80 @@ export interface FeedUser extends User {
   /** Public keys for signing actions */
   pubKeys: string[];
   /** Posts by this user */
-  posts: Post[];
+  posts: FeedPost[];
   /** Recent actions, for rate limiting and ranking. */
   recentActions: StoredAction[];
+}
+
+interface FeedPost {
+  id: number;
+  /** User who posted this */
+  uid: number;
+  /** Time, in Unix ms */
+  timeMs: number;
+  /** Post content */
+  content: string;
+  /** Root ID = ID of this post or highest ancestor */
+  rootID: number;
+  /** Parent ID, or undefined if this is not a reply */
+  parentID?: number;
 }
 
 /** Stores the public global feed. */
 export class ZucastFeed {
   /** Append-only feed of stored actions. Everything else is derived. */
-  sas: StoredAction[] = [];
+  private storedActions: StoredAction[] = [];
   /** Anonymous users */
-  users: FeedUser[] = [];
-  usersByNullifierHash: Map<string, FeedUser> = new Map();
+  private feedUsers: FeedUser[] = [];
+  private feedUsersByNullifierHash: Map<string, FeedUser> = new Map();
   /** Their posts */
-  posts: Post[] = [];
+  private feedPosts: FeedPost[] = [];
 
-  /** Generates a feed of recent posts */
-  genGlobalFeed() {
-    const ret = this.posts.slice(-100).reverse();
+  /** Generates a feed of recent posts, newest to oldest. */
+  loadGlobalFeed(): Post[] {
+    const ret = this.feedPosts.slice(-100).reverse().map(this.toPost);
     console.log(`[FEED] generated global feed, ${ret.length} posts`);
     return ret;
   }
 
+  /** Loads all replies to a post, oldest to newest. */
+  loadThread(rootID: number): Post[] {
+    return this.feedPosts.filter((p) => p.rootID === rootID).map(this.toPost);
+  }
+
+  /** Loads a single post by ID */
+  loadPost(postID: number): Post {
+    const feedPost = this.feedPosts[postID];
+    return this.toPost(feedPost);
+  }
+
+  /** Loads a single user by ID */
+  loadUser(uid: number): User {
+    const feedUser = this.feedUsers[uid];
+    return this.toUser(feedUser);
+  }
+
+  loadFeedUser(uid: number): FeedUser {
+    return this.feedUsers[uid];
+  }
+
+  loadUserPosts(uid: number): Post[] {
+    const feedUser = this.feedUsers[uid];
+    return feedUser.posts
+      .filter((p) => p.parentID == null)
+      .reverse()
+      .map(this.toPost);
+  }
+
+  loadUserReplies(uid: number): Post[] {
+    const feedUser = this.feedUsers[uid];
+    return feedUser.posts.slice().reverse().map(this.toPost);
+  }
+
   /** Performs an action after validation, including verifying its signature. */
-  async verifyExec(sa: StoredAction): Promise<FeedUser> {
+  async verifyExec(sa: StoredAction): Promise<User> {
     const { type } = sa;
-    const user = await (() => {
+    const feedUser = await (() => {
       switch (type) {
         case "addKey":
           return this.verifyExecAddKey(sa);
@@ -54,17 +105,22 @@ export class ZucastFeed {
           throw new Error(`[FEED] invalid stored action ${type}`);
       }
     })();
-    this.sas.push(sa);
-    return user;
+
+    this.storedActions.push(sa);
+    return this.toUser(feedUser);
   }
 
+  /**
+   * Verifies a zero-knowledge proof, then adds a signing pubkey to the
+   * anonymous user (identified only by nullifierHash). Creates a new user if
+   * necessary.
+   */
   private async verifyExecAddKey(sa: StoredActionAddKey) {
     // Parse and verify the PCD
     const serPCD = JSON.parse(sa.pcd) as SerializedPCD;
     console.log(`[FEED] addKey verifying ${serPCD.type}`);
     console.log(serPCD.pcd);
     const pcd = await SemaphoreGroupPCDPackage.deserialize(serPCD.pcd);
-    console.log(`WTF ${pcd.type}`);
     const valid = await SemaphoreGroupPCDPackage.verify(pcd);
     if (!valid) {
       throw new Error(`[FEED] invalid PCD, ignoring addKey`);
@@ -74,11 +130,11 @@ export class ZucastFeed {
       throw new Error(`[FEED] wrong signal, ignoring addKey`);
     }
 
-    let user = this.usersByNullifierHash.get(pcd.claim.nullifierHash);
-    if (user == null) {
+    let feedUser = this.feedUsersByNullifierHash.get(pcd.claim.nullifierHash);
+    if (feedUser == null) {
       console.log(`[FEED] new user ${pcd.claim.nullifierHash}`);
-      user = {
-        uid: this.users.length,
+      feedUser = {
+        uid: this.feedUsers.length,
         nullifierHash: pcd.claim.nullifierHash,
         profile: {
           color: "#99bb99",
@@ -88,59 +144,72 @@ export class ZucastFeed {
         posts: [],
         recentActions: [],
       };
-      this.users.push(user);
-      this.usersByNullifierHash.set(pcd.claim.nullifierHash, user);
+      this.feedUsers.push(feedUser);
+      this.feedUsersByNullifierHash.set(pcd.claim.nullifierHash, feedUser);
     }
-    user.pubKeys.push(sa.pubKeyHex);
-    return user;
+    feedUser.pubKeys.push(sa.pubKeyHex);
+    return feedUser;
   }
 
+  /** Verifies a signing-key signature, then records the (post, like, etc) */
   private async verifyExecAct(sa: StoredActionAct) {
-    const user = this.users[sa.uid];
-    if (!user) throw new Error("[FEED] action uid not found");
+    const feedUser = this.feedUsers[sa.uid];
+    if (!feedUser) throw new Error("[FEED] action uid not found");
 
     // Verify
-    if (!user.pubKeys.includes(sa.pubKeyHex)) {
+    if (!feedUser.pubKeys.includes(sa.pubKeyHex)) {
       throw new Error("[FEED] action pubKey not found");
     }
     await verifySignature(sa.pubKeyHex, sa.signature, sa.actionJSON);
-    user.recentActions.unshift(sa);
 
     // Rate limit
-    const t1h = Date.now() + 60 * 60 * 1000;
-    while (user.recentActions[user.recentActions.length - 1].timeMs < t1h) {
-      user.recentActions.pop();
+    const t1h = Date.now() - 60 * 60 * 1000;
+    const recents = feedUser.recentActions;
+    while (recents.length && recents[recents.length - 1].timeMs < t1h) {
+      recents.pop();
     }
-    if (user.recentActions.length > 50) {
+    if (recents.length > RATE_LIMIT_ACTIONS_PER_HOUR) {
       throw new Error("[FEED] rate limit exceeded");
     }
 
-    // Execute
-    const action = actionModel.parse(sa.actionJSON);
-    this.executeUserAction(user, action, sa.timeMs);
+    // Record user action
+    recents.unshift(sa);
 
-    return user;
+    // Finally, try to execute the action
+    const action = actionModel.parse(JSON.parse(sa.actionJSON));
+    this.executeUserAction(feedUser, action, sa.timeMs);
+
+    return feedUser;
   }
 
   /** Executes and already-verified user action, such as a new post. */
-  private executeUserAction(user: FeedUser, action: Action, timeMs: number) {
+  private executeUserAction(
+    feedUser: FeedUser,
+    action: Action,
+    timeMs: number
+  ) {
     const { type } = action;
     switch (type) {
       case "post":
-        const id = this.posts.length;
+        const id = this.feedPosts.length;
         let rootID = id;
-        if (action.parentID != null && this.posts[action.parentID]) {
-          rootID = this.posts[action.parentID].rootID;
+        if (action.parentID != null && this.feedPosts[action.parentID]) {
+          rootID = this.feedPosts[action.parentID].rootID;
         }
-        const post = {
+        let feedPost: FeedPost = {
           id,
-          user: excerptUser(user),
+          uid: feedUser.uid,
           timeMs: timeMs,
           content: action.content,
+          parentID: action.parentID,
           rootID,
         };
-        this.posts.push(post);
-        this.users[user.uid].posts.push(post);
+
+        const contentJSON = JSON.stringify(action.content);
+        console.log(`[FEED] NEW POST ${id} by ${feedUser.uid}: ${contentJSON}`);
+
+        this.feedPosts.push(feedPost);
+        this.feedUsers[feedUser.uid].posts.push(feedPost);
         break;
 
       case "like":
@@ -148,15 +217,29 @@ export class ZucastFeed {
         // TODO
         break;
 
+      case "saveProfile":
+        console.warn(`[FEED] saveProfile ${feedUser.uid}`);
+        feedUser.profile = action.profile;
+
       default:
         console.warn(`[FEED] ignoring action ${type}`);
     }
   }
-}
 
-function excerptUser(user: FeedUser): User {
-  const { uid, nullifierHash, profile } = user;
-  return { uid, nullifierHash, profile };
+  /** Extracts API-facing data */
+  private toUser(user: FeedUser): User {
+    const { uid, nullifierHash, profile } = user;
+    return { uid, nullifierHash, profile };
+  }
+
+  /** Hydrates API-facing data */
+  private toPost = (post: FeedPost) => {
+    const user = this.toUser(this.feedUsers[post.uid]);
+    const { id, timeMs, content, rootID, parentID } = post;
+    const ret: Post = { id, user, timeMs, content, rootID };
+    if (parentID != null) ret.parentID = parentID;
+    return ret;
+  };
 }
 
 // NextJS workaround.

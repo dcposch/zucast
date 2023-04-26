@@ -2,9 +2,9 @@
  * This is the API-handler of your app that contains all your API routes.
  * On a bigger app, you will probably want to split this file up into multiple files.
  */
+import { StoredAction } from "@/common/model";
 import { auth } from "@/server/auth";
 import { feed } from "@/server/feed";
-import { StoredAction, actionModel } from "@/common/model";
 import { publicProcedure, router } from "@/server/trpc";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
@@ -34,7 +34,8 @@ const appRouter = router({
       const timeMs = Date.now();
       const sa: StoredAction = { ...input, timeMs, type: "addKey" };
       const user = await feed.verifyExec(sa);
-      console.log(`[TRPC] addKey user ${user.uid}`);
+
+      console.log(`[TRPC] addKey success, creating token for user ${user.uid}`);
       const token = auth.createToken(user.uid);
       return token;
     }),
@@ -55,7 +56,7 @@ const appRouter = router({
     }),
 
   globalFeed: publicProcedure.query(() => {
-    return feed.genGlobalFeed();
+    return feed.loadGlobalFeed();
   }),
 
   user: publicProcedure
@@ -65,7 +66,7 @@ const appRouter = router({
       })
     )
     .query(({ input }) => {
-      return feed.users[input.uid];
+      return feed.loadUser(input.uid);
     }),
 
   thread: publicProcedure
@@ -75,7 +76,7 @@ const appRouter = router({
       })
     )
     .query(({ input }) => {
-      return feed.posts.filter((p) => p.rootID === input.rootID);
+      return feed.loadThread(input.rootID);
     }),
 });
 

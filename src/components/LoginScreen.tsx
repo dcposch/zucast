@@ -8,6 +8,7 @@ import { LoginButton } from "./LoginButton";
 import { Container } from "./Container";
 import Head from "next/head";
 import { H1 } from "./typography";
+import { useRouter } from "next/router";
 
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
@@ -28,15 +29,17 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   }, [zupass.status]);
 
   // Once that succeeds, set the zucastToken cookie, giving us read access
+  const router = useRouter();
   useEffect(() => {
     if (addKey.isSuccess) {
       const token = addKey.data;
       console.log(`[LOGIN] setting cookie ${token}`);
       document.cookie = `${COOKIE_ZUCAST_TOKEN}=${token}; path=/`;
+
       // Load the feed
-      window.location.reload();
+      router.replace(router.asPath);
     }
-  }, [addKey]);
+  }, [addKey, router]);
 
   return (
     <>

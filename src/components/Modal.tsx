@@ -20,9 +20,9 @@ export function Modal({
   }, [onClose]);
 
   return (
-    <div className="w-full h-full min-h-screen absolute left-0 top-0 bg-[rgba(0,0,0,0.5)] py-4">
+    <div className="w-full h-full min-h-screen absolute left-0 top-0 bg-[rgba(0,0,0,0.5)] py-4 z-10">
       <Container>
-        <div className="rounded-xl min-h-[16rem] flex flex-col gap-6 p-4 bg-primary-black">
+        <div className="rounded-xl min-h-[16rem] flex flex-col gap-6 p-4 bg-midnight">
           <header className="flex justify-between items-center">
             <H2>{title}</H2>
             <ButtonSquare onClick={onClose}>&times;</ButtonSquare>

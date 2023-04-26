@@ -5,15 +5,15 @@ import { FeedScreen } from "@/components/FeedScreen";
 import { LoginScreen } from "@/components/LoginScreen";
 import { authenticateRequest } from "@/server/auth";
 import { feed } from "@/server/feed";
-import { GetServerSideProps } from "next";
+import { GetServerSidePropsContext } from "next";
 import { useZupass } from "zukit";
 
 interface HomePageProps {
   user: User | null;
-  feedPosts: Post[];
+  posts: Post[];
 }
 
-export default function HomePage({ user, feedPosts }: HomePageProps) {
+export default function HomePage({ user, posts }: HomePageProps) {
   const signingKey = useSigningKey();
   const [zupass] = useZupass();
 
@@ -27,16 +27,18 @@ export default function HomePage({ user, feedPosts }: HomePageProps) {
     // Finally, show the feed
     return (
       <SelfContext.Provider value={{ user, signingKey }}>
-        <FeedScreen posts={feedPosts} />
+        <FeedScreen feed={{ type: "home" }} posts={posts} />
       </SelfContext.Provider>
     );
   }
 }
 
-export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
-  context
-) => {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  // Authenticate
   const user = authenticateRequest(context.req);
-  const feedPosts = user == null ? [] : feed.genGlobalFeed();
-  return { props: { user, feedPosts } };
-};
+
+  // Load posts only if logged in
+  const posts = user == null ? [] : feed.loadGlobalFeed();
+
+  return { props: { user, posts } };
+}

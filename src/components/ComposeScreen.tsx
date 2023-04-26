@@ -4,6 +4,7 @@ import { ChangeEvent, useCallback, useContext, useState } from "react";
 import { Button } from "./Button";
 import { UserIcon } from "./UserIcon";
 import { useEffect } from "react";
+import { MAX_POST_LENGTH } from "@/common/constants";
 
 export function ComposeScreen({ onSuccess }: { onSuccess: () => void }) {
   // Compose box
@@ -15,7 +16,7 @@ export function ComposeScreen({ onSuccess }: { onSuccess: () => void }) {
   );
 
   // Length limit
-  const maxChars = 280;
+  const maxChars = MAX_POST_LENGTH;
   const charsLeft = maxChars - text.length;
 
   // Send button

@@ -18,7 +18,7 @@ export function authenticateRequest(
   const token = req.cookies[COOKIE_ZUCAST_TOKEN];
   const loggedInUid = auth.authenticate(token);
   if (loggedInUid == null) return null;
-  const { uid, nullifierHash, profile } = feed.users[loggedInUid];
+  const { uid, nullifierHash, profile } = feed.loadUser(loggedInUid);
   const user: User = { uid, nullifierHash, profile };
   return user;
 }
@@ -29,12 +29,6 @@ export class ZucastAuth {
   tokens: Token[] = [];
   /** Map from cookie to logged-in user. */
   tokenMap: Map<string, Token> = new Map();
-
-  wtf = (() => {
-    const id = (Math.random() * 1e6) | 0;
-    console.log(`[AUTH] wtf ${id} ${global["test"]}`);
-    return id;
-  })();
 
   createToken(uid: number): string {
     const randomBytes = crypto.getRandomValues(new Uint8Array(32));
@@ -54,7 +48,6 @@ export class ZucastAuth {
     if (!cookie) return null;
     const token = this.tokenMap.get(cookie);
     if (!token) {
-      console.log(`WTF ${this.wtf} ${[...this.tokenMap.keys()].join(", ")}`);
       console.log(`[AUTH] token not found ${cookie}`);
       return null;
     }
@@ -115,8 +108,8 @@ export async function verifyToken(token?: string): Promise<User | undefined> {
     }
 
     // Verify user
-    const user = feed.users[uid];
-    if (user == null || !user.pubKeys.includes(pubKey)) {
+    const user = feed.loadUser(uid);
+    if (user == null || !feed.loadFeedUser(uid).pubKeys.includes(pubKey)) {
       throw new Error("[AUTH] wrong public key for uid");
     }
 

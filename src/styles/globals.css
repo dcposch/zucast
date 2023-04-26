@@ -7,3 +7,7 @@
   background: hsl(263, 36%, 10%);
   color: #fff;
 }
+
+body {
+  overscroll-behavior-y: none;
+}

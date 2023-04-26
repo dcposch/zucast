@@ -6,10 +6,12 @@ export interface User {
   /** Semaphore nullifier hash */
   nullifierHash: string;
   /** Profile */
-  profile: {
-    emoji: string;
-    color: string;
-  };
+  profile: UserProfile;
+}
+
+export interface UserProfile {
+  emoji: string;
+  color: string;
 }
 
 export interface Post {
@@ -37,7 +39,19 @@ export const likeActionModel = z.object({
   postID: z.number(),
 });
 
-export const actionModel = z.union([postActionModel, likeActionModel]);
+export const saveProfileActionModel = z.object({
+  type: z.literal("saveProfile"),
+  profile: z.object({
+    emoji: z.string(),
+    color: z.string(),
+  }),
+});
+
+export const actionModel = z.union([
+  postActionModel,
+  likeActionModel,
+  saveProfileActionModel,
+]);
 
 export type Action = z.infer<typeof actionModel>;
 

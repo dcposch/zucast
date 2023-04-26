@@ -1,3 +1,6 @@
+import Link, { LinkProps } from "next/link";
+import { ReactNode } from "react";
+
 export function Button(props: JSX.IntrinsicElements["button"]) {
   return (
     <button
@@ -9,11 +12,33 @@ export function Button(props: JSX.IntrinsicElements["button"]) {
   );
 }
 
+export function ButtonSmall(props: JSX.IntrinsicElements["button"]) {
+  return (
+    <button
+      {...props}
+      className="px-4 py-2 rounded-md font-semibold text-center
+           bg-transparent hover:bg-white-5% active:bg-white-10%
+           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
+    />
+  );
+}
+
 export function ButtonSquare(props: JSX.IntrinsicElements["button"]) {
   return (
     <button
       {...props}
-      className="w-8 h-8 rounded-md font-semibold
+      className="w-8 h-8 rounded-md font-semibold text-center
+           bg-transparent hover:bg-white-5% active:bg-white-10%
+           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
+    />
+  );
+}
+
+export function LinkSquare(props: LinkProps & { children: ReactNode }) {
+  return (
+    <Link
+      {...props}
+      className="inline-block w-8 h-8 rounded-md font-semibold text-center
            bg-transparent hover:bg-white-5% active:bg-white-10%
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />
