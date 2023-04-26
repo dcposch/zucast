@@ -9,6 +9,8 @@ export interface User {
   pubKeys: string[];
   /** Posts by this user */
   posts: Post[];
+  /** Recent actions, for rate limiting and ranking. */
+  recentActions: StoredAction[];
 }
 
 export interface Post {
@@ -25,20 +27,20 @@ export interface Post {
   parentID?: number;
 }
 
-export const postAction = z.object({
+export const postActionModel = z.object({
   type: z.literal("post"),
   parentID: z.number().optional(),
   content: z.string(),
 });
 
-export const likeAction = z.object({
+export const likeActionModel = z.object({
   type: z.literal("like"),
   postID: z.number(),
 });
 
-export const action = z.union([postAction, likeAction]);
+export const actionModel = z.union([postActionModel, likeActionModel]);
 
-export type Action = z.infer<typeof action>;
+export type Action = z.infer<typeof actionModel>;
 
 export type StoredAction =
   | {
@@ -46,10 +48,12 @@ export type StoredAction =
       type: "act";
       uid: number;
       signature: string;
-      action: Action;
+      pubKeyHex: string;
+      actionJSON: string;
     }
   | {
       timeMs: number;
       type: "addKey";
       pcd: string;
+      pubKeyHex: string;
     };

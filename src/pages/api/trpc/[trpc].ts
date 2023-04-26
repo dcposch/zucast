@@ -4,7 +4,7 @@
  */
 import { auth } from "@/server/auth";
 import { feed } from "@/server/feed";
-import { StoredAction, action } from "@/common/model";
+import { StoredAction, actionModel } from "@/common/model";
 import { publicProcedure, router } from "@/server/trpc";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
@@ -26,12 +26,13 @@ const appRouter = router({
     .input(
       z.object({
         pcd: z.string(),
+        pubKeyHex: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       const timeMs = Date.now();
       const sa: StoredAction = { ...input, timeMs, type: "addKey" };
-      const user = await feed.verifyAndAdd(sa);
+      const user = await feed.verifyAndAddAction(sa);
       const token = auth.createToken(user.uid);
       return token;
     }),
@@ -41,12 +42,12 @@ const appRouter = router({
       z.object({
         uid: z.number(),
         signature: z.string(),
-        action,
+        action: actionModel,
       })
     )
     .mutation(({ input }) => {
       const timeMs = Date.now();
-      feed.verifyAndAdd({ ...input, timeMs, type: "act" });
+      feed.verifyAndAddAction({ ...input, timeMs, type: "act" });
       return "ok";
     }),
 

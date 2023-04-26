@@ -3,6 +3,7 @@ import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
 import { KeyPair } from "@/common/crypto";
 import { useEffect } from "react";
 import { ZupassLoginButton, useZupass } from "zukit";
+import { LoginButton } from "./LoginButton";
 
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
@@ -17,7 +18,8 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   useEffect(() => {
     if (zupass.status !== "logged-in") return;
     console.log(`[LOGIN] uploading signing key`);
-    addKey.mutate({ pcd: JSON.stringify(zupass.serializedPCD) });
+    const { pubKeyHex } = signingKey;
+    addKey.mutate({ pcd: JSON.stringify(zupass.serializedPCD), pubKeyHex });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zupass.status]);
 
@@ -25,7 +27,7 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   useEffect(() => {
     if (addKey.isSuccess) {
       const token = addKey.data;
-      // Add token as a cookie
+      console.log(`[LOGIN] setting cookie ${token}`);
       document.cookie = `${COOKIE_ZUCAST_TOKEN}=${token}; path=/`;
       // Load the feed
       window.location.reload();
@@ -36,11 +38,7 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
     <div>
       <h1>Zucast</h1>
       <div>
-        <ZupassLoginButton
-          anonymous
-          externalNullifier="42"
-          signal={signingKey.pubKeyHash}
-        />
+        <LoginButton pubKeyHash={signingKey.pubKeyHash} />
       </div>
       {zupass.status === "logged-in" && zupass.anonymous && (
         <div className="flex flex-col gap-8">

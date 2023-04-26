@@ -79,3 +79,26 @@ async function fromPair(pair: CryptoKeyPair): Promise<KeyPair> {
   const pubKeyHash = generateMessageHash(pubKeyHex);
   return { pair, pubKeyHex, pubKeyHash };
 }
+
+/** Deserializes an ECDSA public key. */
+export async function importPubKey(hex: string): Promise<CryptoKey> {
+  const buf = Buffer.from(hex, "hex");
+  return crypto.subtle.importKey("raw", buf, p256, true, ["verify"]);
+}
+
+/** Verifies a ECDSA P256 signature. */
+export async function verifySignature(
+  pubKeyHex: string,
+  signatureHex: string,
+  message: string
+) {
+  const valid = await crypto.subtle.verify(
+    p256,
+    await importPubKey(pubKeyHex),
+    Buffer.from(signatureHex, "hex"),
+    new TextEncoder().encode(message)
+  );
+  if (!valid) {
+    throw new Error(`[CRYPTO] invalid signature`);
+  }
+}

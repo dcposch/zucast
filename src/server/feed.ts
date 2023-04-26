@@ -1,4 +1,16 @@
-import { StoredAction, User, Post, Action } from "../common/model";
+import { EXTERNAL_NULLIFIER } from "@/common/constants";
+import {
+  SemaphoreGroupPCDPackage,
+  generateMessageHash,
+} from "@pcd/semaphore-group-pcd";
+import {
+  Action,
+  Post,
+  StoredAction,
+  User,
+  actionModel as actionModel,
+} from "../common/model";
+import { verifySignature } from "@/common/crypto";
 
 /** Stores the public global feed. */
 export class ZucastFeed {
@@ -6,6 +18,7 @@ export class ZucastFeed {
   sas: StoredAction[] = [];
   /** Anonymous users */
   users: User[] = [];
+  usersByNullifierHash: Map<string, User> = new Map();
   /** Their posts */
   posts: Post[] = [];
 
@@ -15,27 +28,66 @@ export class ZucastFeed {
   }
 
   /** Adds a single action after verifying its signature. */
-  async verifyAndAdd(sa: StoredAction): Promise<User> {
+  async verifyAndAddAction(sa: StoredAction): Promise<User> {
     const { type } = sa;
     switch (type) {
       case "act": {
         const user = this.users[sa.uid];
         if (!user) throw new Error("[FEED] action uid not found");
-        // TODO: verify signature
-        // TODO: per-user rate limit
-        this.executeUserAction(user, sa.action, sa.timeMs);
+
+        // Verify
+        if (!user.pubKeys.includes(sa.pubKeyHex)) {
+          throw new Error("[FEED] action pubKey not found");
+        }
+        await verifySignature(sa.pubKeyHex, sa.signature, sa.actionJSON);
+        user.recentActions.unshift(sa);
+
+        // Rate limit
+        const t1h = Date.now() + 60 * 60 * 1000;
+        while (user.recentActions[user.recentActions.length - 1].timeMs < t1h) {
+          user.recentActions.pop();
+        }
+        if (user.recentActions.length > 50) {
+          throw new Error("[FEED] rate limit exceeded");
+        }
+
+        // Execute
+        const action = actionModel.parse(sa.actionJSON);
+        this.executeUserAction(user, action, sa.timeMs);
+
         return user;
       }
 
       case "addKey": {
-        // TODO: parse and verify PCD
-        const user: User = {
-          uid: this.users.length,
-          nullifierHash: sa.pcd,
-          pubKeys: [],
-          posts: [],
-        };
-        this.users.push(user);
+        // Parse and verify the PCD
+        const serPCD = JSON.parse(sa.pcd);
+        const pcd = await SemaphoreGroupPCDPackage.deserialize(serPCD);
+        const valid = await SemaphoreGroupPCDPackage.verify(pcd);
+        if (!valid) {
+          throw new Error(`[FEED] invalid PCD, ignoring addKey`);
+        } else if (pcd.claim.externalNullifier !== "" + EXTERNAL_NULLIFIER) {
+          throw new Error(`[FEED] wrong externalNullifier, ignoring addKey`);
+        } else if (
+          pcd.claim.signal !==
+          "" + generateMessageHash(sa.pubKeyHex)
+        ) {
+          throw new Error(`[FEED] wrong signal, ignoring addKey`);
+        }
+
+        let user = this.usersByNullifierHash.get(pcd.claim.nullifierHash);
+        if (user == null) {
+          console.log(`[FEED] new user ${pcd.claim.nullifierHash}`);
+          user = {
+            uid: this.users.length,
+            nullifierHash: pcd.claim.nullifierHash,
+            pubKeys: [],
+            posts: [],
+            recentActions: [],
+          };
+          this.users.push(user);
+          this.usersByNullifierHash.set(pcd.claim.nullifierHash, user);
+        }
+        user.pubKeys.push(sa.pubKeyHex);
         return user;
       }
 
