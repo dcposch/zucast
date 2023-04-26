@@ -7,7 +7,7 @@ export function LoginButton({ pubKeyHash }: { pubKeyHash: bigint }) {
       anonymous
       externalNullifier={EXTERNAL_NULLIFIER}
       signal={pubKeyHash}
-      className="px-8 py-4 rounded-md bg-purple-300 hover:bg-purple-400 active:bg-purple-500 disabled:bg-purple-200"
+      className="px-8 py-4 rounded-md font-semibold w-64 bg-accent hover:bg-accent-dark-1 active:bg-accent-dark-2 disabled:bg-accent-dark-2 disabled:opacity-75 disabled:cursor-default"
     />
   );
 }

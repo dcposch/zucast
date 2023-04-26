@@ -30,9 +30,11 @@ const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      console.log(`[TRPC] addKey`);
       const timeMs = Date.now();
       const sa: StoredAction = { ...input, timeMs, type: "addKey" };
-      const user = await feed.verifyAndAddAction(sa);
+      const user = await feed.verifyExec(sa);
+      console.log(`[TRPC] addKey user ${user.uid}`);
       const token = auth.createToken(user.uid);
       return token;
     }),
@@ -42,13 +44,14 @@ const appRouter = router({
       z.object({
         uid: z.number(),
         signature: z.string(),
-        action: actionModel,
+        pubKeyHex: z.string(),
+        actionJSON: z.string(),
       })
     )
     .mutation(({ input }) => {
       const timeMs = Date.now();
-      feed.verifyAndAddAction({ ...input, timeMs, type: "act" });
-      return "ok";
+      feed.verifyExec({ ...input, timeMs, type: "act" });
+      return { success: true };
     }),
 
   globalFeed: publicProcedure.query(() => {

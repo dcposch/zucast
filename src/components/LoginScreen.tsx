@@ -1,9 +1,12 @@
 import { trpc } from "@/client/trpc";
 import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
 import { KeyPair } from "@/common/crypto";
+import Image from "next/image";
 import { useEffect } from "react";
-import { ZupassLoginButton, useZupass } from "zukit";
+import { useZupass } from "zukit";
 import { LoginButton } from "./LoginButton";
+import { Container } from "./Container";
+import Head from "next/head";
 
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
@@ -35,23 +38,42 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   }, [addKey]);
 
   return (
-    <div>
-      <h1>Zucast</h1>
-      <div>
-        <LoginButton pubKeyHash={signingKey.pubKeyHash} />
-      </div>
-      {zupass.status === "logged-in" && zupass.anonymous && (
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <div>✅ Valid zero-knowledge proof</div>
-            <div>
-              👁️‍🗨️ Anonymity set <strong>{zupass.group.name}</strong>
-            </div>
-            <div>🕶️ You are one of {zupass.group.members.length} members</div>
-            <div>🔑 Registering signing key...</div>
+    <>
+      <Head>
+        <title>Zucast Login</title>
+      </Head>
+      <Container>
+        <div className="leading-normal flex flex-col gap-4 text-center items-center">
+          <div className="h-8" />
+          <div className="-my-3">
+            <Image src="/logo-160.png" width={80} height={80} alt="Logo" />
           </div>
+          <h1 className="text-2xl font-bold">Zucast</h1>
+          <p>
+            A zero-knowledge forum,
+            <br />
+            private to Zuzalu.
+          </p>
+          <div>
+            <LoginButton pubKeyHash={signingKey.pubKeyHash} />
+          </div>
+          <div />
+          {zupass.status === "logged-in" && zupass.anonymous && (
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-2">
+                <div>✅ Valid zero-knowledge proof</div>
+                <div>
+                  👁️‍🗨️ Anonymity set <strong>{zupass.group.name}</strong>
+                </div>
+                <div>
+                  🕶️ You are one of {zupass.group.members.length} members
+                </div>
+                <div>🔑 Creating signing key...</div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </Container>
+    </>
   );
 }

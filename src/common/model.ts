@@ -5,12 +5,11 @@ export interface User {
   uid: number;
   /** Semaphore nullifier hash */
   nullifierHash: string;
-  /** Public keys for signing actions */
-  pubKeys: string[];
-  /** Posts by this user */
-  posts: Post[];
-  /** Recent actions, for rate limiting and ranking. */
-  recentActions: StoredAction[];
+  /** Profile */
+  profile: {
+    emoji: string;
+    color: string;
+  };
 }
 
 export interface Post {
@@ -42,18 +41,20 @@ export const actionModel = z.union([postActionModel, likeActionModel]);
 
 export type Action = z.infer<typeof actionModel>;
 
-export type StoredAction =
-  | {
-      timeMs: number;
-      type: "act";
-      uid: number;
-      signature: string;
-      pubKeyHex: string;
-      actionJSON: string;
-    }
-  | {
-      timeMs: number;
-      type: "addKey";
-      pcd: string;
-      pubKeyHex: string;
-    };
+export type StoredAction = StoredActionAct | StoredActionAddKey;
+
+export type StoredActionAct = {
+  timeMs: number;
+  type: "act";
+  uid: number;
+  signature: string;
+  pubKeyHex: string;
+  actionJSON: string;
+};
+
+export type StoredActionAddKey = {
+  timeMs: number;
+  type: "addKey";
+  pcd: string;
+  pubKeyHex: string;
+};
