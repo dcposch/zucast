@@ -106,6 +106,6 @@ export async function verifySignature(
     new TextEncoder().encode(message)
   );
   if (!valid) {
-    throw new Error(`[CRYPTO] invalid signature`);
+    throw new Error(`Invalid signature`);
   }
 }

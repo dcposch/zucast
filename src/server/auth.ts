@@ -104,23 +104,23 @@ export async function verifyToken(token?: string): Promise<User | undefined> {
       expectedSignedMessage
     );
     if (!verified) {
-      throw new Error("[AUTH] invalid signature");
+      throw new Error("Bad token, invalid signature");
     }
 
     // Verify user
     const user = feed.loadUser(uid);
     if (user == null || !feed.loadFeedUser(uid).pubKeys.includes(pubKey)) {
-      throw new Error("[AUTH] wrong public key for uid");
+      throw new Error("Bad token, wrong public key for uid");
     }
 
     // Verify expiration
     if (Date.now() > exp) {
-      throw new Error("[AUTH] expired token");
+      throw new Error("Expired token");
     }
 
     return user;
   } catch (e: any) {
-    console.error(`[AUTH] invalid token for ${uid}: ${e?.message}`);
+    console.error(`Invalid token for ${uid}: ${e?.message}`);
     console.error(e);
     return undefined;
   }

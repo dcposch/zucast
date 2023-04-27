@@ -10,18 +10,6 @@ import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
 
 const appRouter = router({
-  greeting: publicProcedure
-    .input(
-      z.object({
-        name: z.string().nullish(),
-      })
-    )
-    .query(({ input }) => {
-      return {
-        ret: `hello ${input?.name ?? "world"}`,
-      };
-    }),
-
   addKey: publicProcedure
     .input(
       z.object({
@@ -49,9 +37,9 @@ const appRouter = router({
         actionJSON: z.string(),
       })
     )
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
       const timeMs = Date.now();
-      feed.verifyExec({ ...input, timeMs, type: "act" });
+      await feed.verifyExec({ ...input, timeMs, type: "act" });
       return { success: true };
     }),
 

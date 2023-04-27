@@ -1,8 +1,8 @@
-import { useCallback, useContext, useState } from "react";
-import { trpc } from "./trpc";
-import { Action, User } from "@/common/model";
-import { SelfContext } from "./self";
 import { sign } from "@/common/crypto";
+import { Action } from "@/common/model";
+import { useCallback, useContext } from "react";
+import { SelfContext } from "./self";
+import { trpc } from "./trpc";
 
 /** Sign an action (cast, like, etc), append to the global log. */
 export function useSendAction() {

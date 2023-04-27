@@ -102,7 +102,7 @@ export class ZucastFeed {
         case "act":
           return this.verifyExecAct(sa);
         default:
-          throw new Error(`[FEED] invalid stored action ${type}`);
+          throw new Error(`Invalid stored action type ${type}`);
       }
     })();
 
@@ -123,11 +123,11 @@ export class ZucastFeed {
     const pcd = await SemaphoreGroupPCDPackage.deserialize(serPCD.pcd);
     const valid = await SemaphoreGroupPCDPackage.verify(pcd);
     if (!valid) {
-      throw new Error(`[FEED] invalid PCD, ignoring addKey`);
+      throw new Error(`Invalid PCD, ignoring addKey`);
     } else if (pcd.claim.externalNullifier !== "" + EXTERNAL_NULLIFIER) {
-      throw new Error(`[FEED] wrong externalNullifier, ignoring addKey`);
+      throw new Error(`Wrong externalNullifier, ignoring addKey`);
     } else if (pcd.claim.signal !== "" + generateMessageHash(sa.pubKeyHex)) {
-      throw new Error(`[FEED] wrong signal, ignoring addKey`);
+      throw new Error(`Wrong signal, ignoring addKey`);
     }
 
     let feedUser = this.feedUsersByNullifierHash.get(pcd.claim.nullifierHash);
@@ -154,11 +154,13 @@ export class ZucastFeed {
   /** Verifies a signing-key signature, then records the (post, like, etc) */
   private async verifyExecAct(sa: StoredActionAct) {
     const feedUser = this.feedUsers[sa.uid];
-    if (!feedUser) throw new Error("[FEED] action uid not found");
+    if (!feedUser) {
+      throw new Error("Ignoring action, uid not found");
+    }
 
     // Verify
     if (!feedUser.pubKeys.includes(sa.pubKeyHex)) {
-      throw new Error("[FEED] action pubKey not found");
+      throw new Error("Ignoring action, signing pubKey not found");
     }
     await verifySignature(sa.pubKeyHex, sa.signature, sa.actionJSON);
 
@@ -169,7 +171,7 @@ export class ZucastFeed {
       recents.pop();
     }
     if (recents.length > RATE_LIMIT_ACTIONS_PER_HOUR) {
-      throw new Error("[FEED] rate limit exceeded");
+      throw new Error("Rate limit exceeded");
     }
 
     // Record user action
