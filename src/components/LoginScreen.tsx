@@ -58,9 +58,9 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
             <br />
             private to Zuzalu.
           </p>
-          <div>
+          {zupass.status !== "logged-in" && (
             <LoginButton pubKeyHash={signingKey.pubKeyHash} />
-          </div>
+          )}
           <div />
           {zupass.status === "logged-in" && zupass.anonymous && (
             <div className="flex flex-col gap-8">
