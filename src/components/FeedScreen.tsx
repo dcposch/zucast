@@ -3,7 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { Button, LinkSquare } from "./Button";
-import { ComposeScreen } from "./ComposeScreen";
+import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
 import { Modal } from "./Modal";
 import { PostBox } from "./PostBox";
@@ -23,16 +23,8 @@ type FeedType =
     };
 
 export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
-  // Cast modal
-  const [modal, setModal] = useState<"cast">();
-  const showCastModal = useCallback(() => setModal("cast"), []);
-  const closeModal = useCallback(() => setModal(undefined), []);
-
-  const router = useRouter();
-  const postSucceeded = useCallback(() => {
-    setModal(undefined);
-    router.replace(router.asPath);
-  }, [router]);
+  // Compose modal
+  const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
 
   // For thread view, highlight selected post
   const selectedPostID = feed.type === "thread" ? feed.postID : null;
@@ -44,8 +36,8 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
       <Head>
         <title>Zucast</title>
       </Head>
-      {modal === "cast" && (
-        <Modal onClose={closeModal} title="Cast">
+      {isOpen && (
+        <Modal onClose={hideCompose} title="Compose">
           <ComposeScreen onSuccess={postSucceeded} />
         </Modal>
       )}
@@ -58,12 +50,13 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
             {feed.type === "thread" && "Thread"}
             {feed.type === "profile" && `#${feed.profileUser.uid}`}
           </H2>
-          <Button onClick={showCastModal}>Cast</Button>
+          <Button onClick={showCompose}>Post</Button>
         </header>
-        <main className="flex flex-col gap-8">
+        <main className="flex flex-col gap-4">
           {feed.type === "profile" && (
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
+          <div />
           {posts.map((post) => (
             <PostBox
               key={post.id}
