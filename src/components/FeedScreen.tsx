@@ -57,6 +57,9 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
           <div />
+          {feed.type === "profile" && feed.tab === "likes" && (
+            <strong className="text-center">coming soon</strong>
+          )}
           {posts.map((post) => (
             <PostBox
               key={post.id}
