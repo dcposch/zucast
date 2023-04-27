@@ -3,16 +3,8 @@ import { SelfContext } from "@/client/self";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Button, ButtonSmall } from "./Button";
 import { UserIconProfile } from "./UserIcon";
-
-const colors: string[] = [];
-for (let i = 0; i < 4; i++) {
-  for (let j = 0; j < 8; j++) {
-    const hue = j === 7 ? 0 : j * 48;
-    const sat = j === 7 ? 0 : 60 - i * 10;
-    const light = 85 - i * 10;
-    colors.push(`hsl(${hue}, ${sat}%, ${light}%)`);
-  }
-}
+import { validateEmoji } from "@/common/validation";
+import { PROFILE_COLORS } from "@/common/constants";
 
 export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
   // In-progress profile edit
@@ -23,12 +15,14 @@ export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
     if (!profile) return;
     const input = prompt("New emoji", profile.emoji);
     if (!input) return;
-    const match = input.match(/\p{Extended_Pictographic}/u);
-    if (!match) {
+    let emoji;
+    try {
+      emoji = validateEmoji(input);
+    } catch (e) {
       alert("That's not an emoji");
       return;
     }
-    setProfile({ ...profile, emoji: match[0] });
+    setProfile({ ...profile, emoji });
   }, [profile]);
 
   // Save button
@@ -52,7 +46,7 @@ export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
         <UserIconProfile size="w-12 h-12 text-3xl" profile={profile} />
       </div>
       <div className="grid grid-cols-8">
-        {colors.map((color) => (
+        {PROFILE_COLORS.map((color) => (
           <button
             key={color}
             onClick={() => setProfile({ ...profile, color })}

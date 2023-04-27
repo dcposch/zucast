@@ -17,6 +17,7 @@ import {
 } from "../common/model";
 import { verifySignature } from "@/common/crypto";
 import { SerializedPCD } from "@pcd/pcd-types";
+import { validatePost, validateProfile } from "@/common/validation";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -207,6 +208,12 @@ export class ZucastFeed {
           rootID,
         };
 
+        // Validate
+        if (action.parentID != null && !this.loadPost(action.parentID)) {
+          throw new Error("Ignoring post, bad parentID");
+        }
+        validatePost(action.content);
+
         const contentJSON = JSON.stringify(action.content);
         console.log(`[FEED] NEW POST ${id} by ${feedUser.uid}: ${contentJSON}`);
 
@@ -221,7 +228,7 @@ export class ZucastFeed {
 
       case "saveProfile":
         console.warn(`[FEED] saveProfile ${feedUser.uid}`);
-        feedUser.profile = action.profile;
+        feedUser.profile = validateProfile(action.profile);
 
       default:
         console.warn(`[FEED] ignoring action ${type}`);
