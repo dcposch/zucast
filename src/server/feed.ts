@@ -54,7 +54,13 @@ export class ZucastFeed {
 
   /** Generates a feed of recent posts, newest to oldest. */
   loadGlobalFeed(): Post[] {
-    const ret = this.feedPosts.slice(-100).reverse().map(this.toPost);
+    // The Algorithm™
+    const ret = this.feedPosts
+      .slice(-300)
+      .filter((p) => p.parentID == null)
+      .slice(-100)
+      .reverse()
+      .map(this.toPost);
     console.log(`[FEED] generated global feed, ${ret.length} posts`);
     return ret;
   }
