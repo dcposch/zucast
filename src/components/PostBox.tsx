@@ -33,7 +33,7 @@ export function PostBox({
             </strong>{" "}
             <span className="text-gray">
               · <Link href={`/post/${post.id}`}>{time}</Link>
-              {post.parentID && (
+              {post.parentID != null && (
                 <>
                   {" "}
                   · <Link href={`/post/${post.parentID}`}>reply</Link>
