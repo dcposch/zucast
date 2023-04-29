@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { ButtonSquare } from "./Button";
 import { Container } from "./Container";
 import { H2 } from "./typography";
+import { useEscape } from "@/client/hooks";
 
 export function Modal({
   children,
@@ -13,11 +14,7 @@ export function Modal({
   onClose: () => void;
 }) {
   // Close on escape
-  useEffect(() => {
-    const fn = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", fn, { capture: true });
-    return () => window.removeEventListener("keydown", fn, { capture: true });
-  }, [onClose]);
+  useEscape(onClose);
 
   return (
     <div className="w-full h-full min-h-screen absolute left-0 top-0 bg-[rgba(0,0,0,0.5)] py-4 z-10">

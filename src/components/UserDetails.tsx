@@ -78,7 +78,7 @@ function Tab({ title, selected }: { title: string; selected?: boolean }) {
     <Link
       href={`${location.pathname}${query}`}
       className="flex justify-center items-end font-semibold 
-      hover:bg-white-5% active:bg-white-10%"
+      hover:no-underline hover:bg-white-hov active:bg-white-act"
     >
       <div className="select-none h-6">{title}</div>
     </Link>

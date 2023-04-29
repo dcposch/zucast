@@ -11,3 +11,7 @@
 body {
   overscroll-behavior-y: none;
 }
+
+a:hover {
+  text-decoration: underline;
+}

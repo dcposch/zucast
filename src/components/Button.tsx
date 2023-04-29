@@ -17,7 +17,7 @@ export function ButtonSmall(props: JSX.IntrinsicElements["button"]) {
     <button
       {...props}
       className="px-4 py-2 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-5% active:bg-white-10%
+           bg-transparent hover:bg-white-hov active:bg-white-act
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />
   );
@@ -28,7 +28,7 @@ export function ButtonSquare(props: JSX.IntrinsicElements["button"]) {
     <button
       {...props}
       className="w-8 h-8 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-5% active:bg-white-10%
+           bg-transparent hover:bg-white-hov active:bg-white-act
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />
   );
@@ -39,7 +39,7 @@ export function LinkSquare(props: LinkProps & { children: ReactNode }) {
     <Link
       {...props}
       className="inline-block w-8 h-8 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-5% active:bg-white-10%
+           bg-transparent hover:no-underline hover:bg-white-hov active:bg-white-act
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />
   );

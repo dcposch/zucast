@@ -1,7 +1,7 @@
 import { Post, User } from "@/common/model";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, LinkSquare } from "./Button";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
@@ -9,6 +9,7 @@ import { Modal } from "./Modal";
 import { PostBox } from "./PostBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
+import { useEscape } from "@/client/hooks";
 
 type FeedType =
   | { type: "home" }
@@ -28,6 +29,14 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
 
   // For thread view, highlight selected post
   const selectedPostID = feed.type === "thread" ? feed.postID : null;
+
+  // ESC to return to previous feed
+  const router = useRouter();
+  const goBack = useCallback(
+    () => feed.type !== "home" && router.back(),
+    [feed.type, router]
+  );
+  useEscape(goBack);
 
   console.log(`[FEED] ${feed.type} rendering ${posts.length} posts`);
 
@@ -52,13 +61,13 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
           </H2>
           <Button onClick={showCompose}>Post</Button>
         </header>
-        <main className="flex flex-col gap-4">
+        <main className="flex flex-col">
           {feed.type === "profile" && (
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
-          <div />
+          <div className="h-4" />
           {feed.type === "profile" && feed.tab === "likes" && (
-            <strong className="text-center">coming soon</strong>
+            <strong className="text-center py-2">coming soon</strong>
           )}
           {posts.map((post) => (
             <PostBox

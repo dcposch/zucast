@@ -1,6 +1,6 @@
 import { sign } from "@/common/crypto";
 import { Action } from "@/common/model";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { SelfContext } from "./self";
 import { trpc } from "./trpc";
 
@@ -24,4 +24,25 @@ export function useSendAction() {
   );
 
   return [send, act] as [typeof send, typeof act];
+}
+
+// When Esc-ing from a screen, only escape from the top (most recent) one.
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", onKeyDown, { capture: true });
+}
+const escHandlers: (() => void)[] = [];
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key !== "Escape") return;
+  if (escHandlers.length === 0) return;
+  escHandlers[escHandlers.length - 1]();
+}
+
+/** Perform a callback on Escape */
+export function useEscape(callback: () => void) {
+  useEffect(() => {
+    escHandlers.push(callback);
+    return () => {
+      escHandlers.pop();
+    };
+  }, [callback]);
 }
