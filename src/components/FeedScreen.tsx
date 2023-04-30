@@ -1,16 +1,15 @@
-import { Post, Thread, User } from "@/common/model";
+import { useEscape } from "@/client/hooks";
+import { Thread, User } from "@/common/model";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Button, LinkSquare } from "./Button";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
 import { Modal } from "./Modal";
-import { PostBox } from "./PostBox";
+import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
-import { useEscape } from "@/client/hooks";
-import { ThreadBox } from "./ThreadBox";
 
 type FeedType =
   | { type: "home" }

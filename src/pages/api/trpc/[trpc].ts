@@ -43,10 +43,6 @@ const appRouter = router({
       return { success: true };
     }),
 
-  globalFeed: publicProcedure.query(() => {
-    return feed.loadGlobalFeed();
-  }),
-
   user: publicProcedure
     .input(
       z.object({
@@ -55,16 +51,6 @@ const appRouter = router({
     )
     .query(({ input }) => {
       return feed.loadUser(input.uid);
-    }),
-
-  thread: publicProcedure
-    .input(
-      z.object({
-        rootID: z.number(),
-      })
-    )
-    .query(({ input }) => {
-      return feed.loadThread(input.rootID);
     }),
 });
 

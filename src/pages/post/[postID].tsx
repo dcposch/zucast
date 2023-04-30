@@ -34,11 +34,11 @@ export const getServerSideProps: GetServerSideProps<PostPageProps> = async (
   // Validate inputs
   const postID = Number(context.query.postID);
   if (!Number.isInteger(postID)) throw new Error("Invalid postID");
-  const post = feed.loadPost(postID);
+  const post = feed.loadPost(user.uid, postID);
   if (post == null) throw new Error("Post not found");
 
   // Load data
-  const thread = feed.loadThread(post.id);
+  const thread = feed.loadThread(user.uid, post.id);
 
   return { props: { user, thread, postID } };
 };

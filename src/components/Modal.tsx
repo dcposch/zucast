@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEscape } from "@/client/hooks";
 import { ButtonSquare } from "./Button";
 import { Container } from "./Container";
 import { H2 } from "./typography";
-import { useEscape } from "@/client/hooks";
 
 export function Modal({
   children,

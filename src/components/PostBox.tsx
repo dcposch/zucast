@@ -1,12 +1,38 @@
+import { useSendAction } from "@/client/hooks";
 import { Post } from "@/common/model";
-import { CommentIcon, HeartIcon } from "@primer/octicons-react";
+import { CommentIcon, HeartFillIcon, HeartIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { MouseEvent, useCallback } from "react";
+import { MouseEvent, useCallback, useEffect, useState } from "react";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
 import { UserIcon } from "./UserIcon";
+
+export function useLikePost(post: Post) {
+  const [act, result] = useSendAction();
+
+  // Optimistic update
+  const [[liked, nLikes], setLiked] = useState([post.liked, post.nLikes]);
+  const toggleLike = useCallback(async () => {
+    if (!liked) {
+      setLiked([true, nLikes + 1]);
+      await act({ type: "like", postID: post.id });
+    } else {
+      setLiked([false, nLikes - 1]);
+      await act({ type: "unlike", postID: post.id });
+    }
+  }, [act, post, liked, nLikes]);
+
+  useEffect(() => {
+    if (result.error) {
+      setLiked([post.liked, post.nLikes]);
+      window.alert(result.error.message);
+    }
+  }, [post, result.error]);
+
+  return [liked, nLikes, toggleLike] as const;
+}
 
 export function PostBox({
   post,
@@ -21,10 +47,11 @@ export function PostBox({
   connUp?: boolean;
   connDown?: boolean;
 }) {
+  // Compose a reply
   const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
 
+  // Link to the post
   const time = formatTime(post.timeMs); // eg "just now" or "6m"
-
   const router = useRouter();
   const goToPost = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
@@ -35,6 +62,9 @@ export function PostBox({
     [post.id, router]
   );
   const shouldLink = !big && !noButtons;
+
+  // Like and unlike the post
+  const [liked, nLikes, toggleLike] = useLikePost(post);
 
   return (
     <>
@@ -53,73 +83,103 @@ export function PostBox({
           "hover:bg-white-hov": shouldLink,
         })}
       >
+        {/** Left: user icon, reply lines */}
         <div className="flex flex-col">
-          {!big && (
-            <div
-              className={classNames("h-2 w-4 border-gray", {
-                "border-r": connUp,
-              })}
-            />
-          )}
+          {!big && <Conn show={connUp} size={"h-2 w-4"} />}
           <UserIcon user={post.user} big={big} />
           {connDown && (
-            <div
-              className={classNames("flex-grow border-gray border-r", {
-                "w-6": big,
-                "w-4": !big,
-              })}
-            />
+            <Conn show size={"flex-grow " + (big ? "w-6" : "w-4")} />
           )}
         </div>
-        <div className={classNames("flex flex-col gap-1", { "py-2": !big })}>
-          <header className={classNames({ "text-lg": big })}>
-            <strong>
-              {noButtons && <span>#{post.user.uid}</span>}
-              {!noButtons && (
-                <Link href={`/user/${post.user.uid}`}>#{post.user.uid}</Link>
-              )}
-            </strong>
-            <span className="text-gray">
-              {" · "}
-              {noButtons && <span>{time}</span>}
-              {!noButtons && <Link href={`/post/${post.id}`}>{time}</Link>}
-              {post.parentID != null && !noButtons && !connUp && (
-                <>
-                  {" · "}
-                  <Link href={`/post/${post.parentID}`}>
-                    replying to #{post.parentUID}
-                  </Link>
-                </>
-              )}
-            </span>
-          </header>
+        {/** Right: header, post content, reply+like buttons */}
+        <div className={classNames("flex flex-col gap-1", { "pt-2": !big })}>
+          <PostHeader {...{ post, time, big, connUp, noButtons }} />
           <div className={classNames({ "text-xl": big })}>{post.content}</div>
           {!noButtons && (
-            <div className="h-4">
+            <div className="flex gap-1">
               <IconButton
                 type="reply"
                 val={post.nDirectReplies}
                 onClick={showCompose}
               />
+              <IconButton
+                type={liked ? "unlike" : "like"}
+                val={nLikes}
+                onClick={toggleLike}
+              />
             </div>
           )}
-          <div></div>
         </div>
       </div>
     </>
   );
 }
 
+function PostHeader({
+  post,
+  time,
+  big,
+  noButtons,
+  connUp,
+}: {
+  post: Post;
+  time: string;
+  big?: boolean;
+  noButtons?: boolean;
+  connUp?: boolean;
+}) {
+  return (
+    <header className={classNames({ "text-lg": big })}>
+      <strong>
+        {noButtons && <span>#{post.user.uid}</span>}
+        {!noButtons && (
+          <Link href={`/user/${post.user.uid}`}>#{post.user.uid}</Link>
+        )}
+      </strong>
+      <span className="text-gray">
+        {" · "}
+        {noButtons && <span>{time}</span>}
+        {!noButtons && <Link href={`/post/${post.id}`}>{time}</Link>}
+        {post.parentID != null && !noButtons && !connUp && (
+          <>
+            {" · "}
+            <Link href={`/post/${post.parentID}`}>
+              replying to #{post.parentUID}
+            </Link>
+          </>
+        )}
+      </span>
+    </header>
+  );
+}
+
+/** Spacer, reply connector line */
+function Conn({ show, size }: { show?: boolean; size: string }) {
+  return (
+    <div className={classNames(size, "border-gray", { "border-r": show })} />
+  );
+}
+
+/** Reply, like, unlike button */
 function IconButton({
   type,
   val,
   onClick,
 }: {
-  type: "like" | "reply";
+  type: "like" | "unlike" | "reply";
   val: number;
   onClick: () => void;
 }) {
-  const icon = type === "like" ? <HeartIcon /> : <CommentIcon />;
+  const icon = (function () {
+    switch (type) {
+      case "like":
+        return <HeartIcon />;
+      case "unlike":
+        return <HeartFillIcon fill="red" />;
+      case "reply":
+        return <CommentIcon />;
+    }
+  })();
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {

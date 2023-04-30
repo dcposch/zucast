@@ -3,6 +3,9 @@ import {
   PROFILE_COLORS,
   RATE_LIMIT_ACTIONS_PER_HOUR,
 } from "@/common/constants";
+import { verifySignature } from "@/common/crypto";
+import { validatePost, validateProfile } from "@/common/validation";
+import { SerializedPCD } from "@pcd/pcd-types";
 import {
   SemaphoreGroupPCDPackage,
   generateMessageHash,
@@ -15,11 +18,8 @@ import {
   StoredActionAddKey,
   Thread,
   User,
-  actionModel as actionModel,
+  actionModel,
 } from "../common/model";
-import { verifySignature } from "@/common/crypto";
-import { SerializedPCD } from "@pcd/pcd-types";
-import { validatePost, validateProfile } from "@/common/validation";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -46,6 +46,8 @@ interface FeedPost {
   replies: FeedPost[];
   /** Number of direct replies */
   nDirectReplies: number;
+  /** UIDs that have liked this post */
+  likedBy: Set<number>;
   /** Number of likes */
   nLikes: number;
 }
@@ -61,7 +63,7 @@ export class ZucastFeed {
   private feedPosts: FeedPost[] = [];
 
   /** Generates a feed of recent posts, newest to oldest. */
-  loadGlobalFeed(): Thread[] {
+  loadGlobalFeed(authUID: number): Thread[] {
     // The Algorithm™
     const threadIDs = new Set<number>();
     const ret = this.feedPosts
@@ -75,7 +77,7 @@ export class ZucastFeed {
       .map((p) => this.feedPosts[p.rootID])
       .map<Thread>((p) => ({
         rootID: p.id,
-        posts: p.replies.map(this.toPost),
+        posts: p.replies.map((p) => this.toPost(authUID, p)),
       }))
       .reverse();
     console.log(`[FEED] generated global feed, ${ret.length} threads`);
@@ -83,7 +85,7 @@ export class ZucastFeed {
   }
 
   /** Loads all replies to a post, including the original, oldest to newest. */
-  loadThread(postID: number): Thread {
+  loadThread(authUID: number, postID: number): Thread {
     const feedPost = this.feedPosts[postID];
     const rootID = feedPost.rootID;
 
@@ -104,15 +106,15 @@ export class ZucastFeed {
         }
         return ancestors.has(p.id) || descendents.has(p.id);
       })
-      .map(this.toPost);
+      .map((p) => this.toPost(authUID, p));
 
     return { rootID, posts };
   }
 
   /** Loads a single post by ID */
-  loadPost(postID: number): Post {
+  loadPost(authUID: number, postID: number): Post {
     const feedPost = this.feedPosts[postID];
-    return this.toPost(feedPost);
+    return this.toPost(authUID, feedPost);
   }
 
   /** Loads a single user by ID */
@@ -125,18 +127,18 @@ export class ZucastFeed {
     return this.feedUsers[uid];
   }
 
-  loadUserPosts(uid: number): Thread[] {
+  loadUserPosts(authUID: number, uid: number): Thread[] {
     const feedUser = this.feedUsers[uid];
     return feedUser.posts
       .filter((p) => p.parentID == null)
-      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(p)] }))
+      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(authUID, p)] }))
       .reverse();
   }
 
-  loadUserReplies(uid: number): Thread[] {
+  loadUserReplies(authUID: number, uid: number): Thread[] {
     const feedUser = this.feedUsers[uid];
     return feedUser.posts
-      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(p)] }))
+      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(authUID, p)] }))
       .reverse();
   }
 
@@ -240,54 +242,99 @@ export class ZucastFeed {
   ) {
     const { type } = action;
     switch (type) {
-      case "post":
-        const id = this.feedPosts.length;
-        let rootID = id;
-        if (action.parentID != null && this.feedPosts[action.parentID]) {
-          rootID = this.feedPosts[action.parentID].rootID;
-        }
-        let feedPost: FeedPost = {
-          id,
-          uid: feedUser.uid,
-          timeMs: timeMs,
-          content: action.content,
-          parentID: action.parentID,
-          rootID,
-          replies: [],
-          nDirectReplies: 0,
-          nLikes: 0,
-        };
-
-        // Validate
-        if (action.parentID != null && !this.loadPost(action.parentID)) {
-          throw new Error("Ignoring post, bad parentID");
-        }
-        validatePost(action.content);
-
-        const contentJSON = JSON.stringify(action.content);
-        console.log(`[FEED] NEW POST ${id} by ${feedUser.uid}: ${contentJSON}`);
-
-        this.feedPosts.push(feedPost);
-        this.feedUsers[feedUser.uid].posts.push(feedPost);
-        this.feedPosts[feedPost.rootID].replies.push(feedPost);
-
-        if (feedPost.parentID != null) {
-          this.feedPosts[feedPost.parentID].nDirectReplies++;
-        }
+      case "post": {
+        const { content, parentID } = action;
+        this.execPost(feedUser, timeMs, content, parentID);
         break;
+      }
 
-      case "like":
-        console.warn("[FEED] like unimplemented");
-        // TODO
+      case "like": {
+        const { postID } = action;
+        this.execLike(feedUser, postID, 1);
         break;
+      }
 
-      case "saveProfile":
-        console.warn(`[FEED] saveProfile ${feedUser.uid}`);
+      case "unlike": {
+        const { postID } = action;
+        this.execLike(feedUser, postID, -1);
+        break;
+      }
+
+      case "saveProfile": {
+        console.log(`[FEED] saveProfile ${feedUser.uid}`);
         feedUser.profile = validateProfile(action.profile);
+      }
 
       default:
         console.warn(`[FEED] ignoring action ${type}`);
     }
+  }
+
+  /** Saves an already-verified new post or reply */
+  private execPost(
+    feedUser: FeedUser,
+    timeMs: number,
+    content: string,
+    parentID?: number
+  ) {
+    const id = this.feedPosts.length;
+    const contentJSON = JSON.stringify(content);
+    console.log(`[FEED] NEW POST ${id} by ${feedUser.uid}: ${contentJSON}`);
+
+    let rootID = id;
+    if (parentID != null && this.feedPosts[parentID]) {
+      rootID = this.feedPosts[parentID].rootID;
+    }
+    let feedPost: FeedPost = {
+      id,
+      uid: feedUser.uid,
+      timeMs: timeMs,
+      content,
+      parentID,
+      rootID,
+      replies: [],
+      nDirectReplies: 0,
+      likedBy: new Set(),
+      nLikes: 0,
+    };
+
+    // Validate
+    if (parentID != null && this.feedPosts[parentID] == null) {
+      throw new Error("Ignoring post, bad parentID");
+    }
+    validatePost(content);
+
+    this.feedPosts.push(feedPost);
+    this.feedUsers[feedUser.uid].posts.push(feedPost);
+    this.feedPosts[feedPost.rootID].replies.push(feedPost);
+
+    if (feedPost.parentID != null) {
+      this.feedPosts[feedPost.parentID].nDirectReplies++;
+    }
+  }
+
+  /** Executes an already-verified like or unlike */
+  private execLike(feedUser: FeedUser, postID: number, delta: 1 | -1) {
+    const { uid } = feedUser;
+    console.log(`[FEED] ${uid} ${delta > 0 ? "like" : "unlike"} ${postID}`);
+
+    const feedPost = this.feedPosts[postID];
+    if (!feedPost) {
+      throw new Error("Ignoring like, post not found");
+    }
+
+    if (delta > 0) {
+      if (feedPost.likedBy.has(uid)) {
+        throw new Error("Ignoring like, already liked");
+      }
+      feedPost.likedBy.add(uid);
+    } else {
+      if (!feedPost.likedBy.has(uid)) {
+        throw new Error("Ignoring unlike, no like found");
+      }
+      feedPost.likedBy.delete(uid);
+    }
+    feedPost.nLikes += delta;
   }
 
   /** Extracts API-facing data */
@@ -297,18 +344,20 @@ export class ZucastFeed {
   }
 
   /** Hydrates API-facing data */
-  private toPost = (feedPost: FeedPost) => {
+  private toPost = (authUID: number, feedPost: FeedPost) => {
     const user = this.toUser(this.feedUsers[feedPost.uid]);
     const { id, timeMs, content, rootID, parentID } = feedPost;
     const { nDirectReplies, nLikes } = feedPost;
 
     const ret: Post = {
+      authUID,
       id,
       user,
       timeMs,
       content,
       rootID,
       nDirectReplies,
+      liked: feedPost.likedBy.has(authUID),
       nLikes,
     };
 

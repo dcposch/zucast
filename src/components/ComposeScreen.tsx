@@ -1,13 +1,18 @@
 import { useSendAction } from "@/client/hooks";
 import { SelfContext } from "@/client/self";
-import { ChangeEvent, useCallback, useContext, useState } from "react";
-import { Button } from "./Button";
-import { UserIcon } from "./UserIcon";
-import { useEffect } from "react";
 import { MAX_POST_LENGTH } from "@/common/constants";
 import { Action, Post } from "@/common/model";
-import { PostBox } from "./PostBox";
 import { useRouter } from "next/router";
+import {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { Button } from "./Button";
+import { PostBox } from "./PostBox";
+import { UserIcon } from "./UserIcon";
 
 export function useComposeModal() {
   const [isOpen, setOpen] = useState(false);

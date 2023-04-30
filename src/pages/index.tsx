@@ -40,7 +40,7 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
   const user = authenticateRequest(context.req);
 
   // Load posts only if logged in
-  const threads = user == null ? [] : feed.loadGlobalFeed();
+  const threads = user == null ? [] : feed.loadGlobalFeed(user.uid);
 
   return { props: { user, threads } };
 };

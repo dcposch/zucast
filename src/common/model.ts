@@ -15,6 +15,9 @@ export interface UserProfile {
 }
 
 export interface Post {
+  /** User viewing this post. See `liked` */
+  authUID: number;
+  /** Post ID */
   id: number;
   /** User who posted this */
   user: User;
@@ -28,8 +31,11 @@ export interface Post {
   parentID?: number;
   /** User we're replying to, if applicable */
   parentUID?: number;
-
+  /** Whether the logged-in user (authUID) liked this post */
+  liked: boolean;
+  /** Total # of direct replies */
   nDirectReplies: number;
+  /** Total # of likes */
   nLikes: number;
 }
 
@@ -46,7 +52,7 @@ export const postActionModel = z.object({
 });
 
 export const likeActionModel = z.object({
-  type: z.literal("like"),
+  type: z.union([z.literal("like"), z.literal("unlike")]),
   postID: z.number(),
 });
 

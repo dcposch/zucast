@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export default function middleware(request: NextRequest) {
   const response = NextResponse.next();

@@ -47,18 +47,22 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (
   if (profileUser == null) throw new Error("User not found");
 
   // Load posts
-  const [tab, threads] = loadUserTab(uid, context.query.tab as string);
+  const [tab, threads] = loadUserTab(user.uid, uid, context.query.tab);
 
   return { props: { user, profileUser, tab, threads } };
 };
 
-function loadUserTab(uid: number, tab: string): [string, Thread[]] {
+function loadUserTab(
+  authUID: number,
+  uid: number,
+  tab: string | string[] | undefined
+): [string, Thread[]] {
   switch (tab) {
     case "likes":
       return ["likes", []];
     case "replies":
-      return ["replies", feed.loadUserReplies(uid)];
+      return ["replies", feed.loadUserReplies(authUID, uid)];
     default:
-      return ["posts", feed.loadUserPosts(uid)];
+      return ["posts", feed.loadUserPosts(authUID, uid)];
   }
 }
