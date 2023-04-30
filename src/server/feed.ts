@@ -44,6 +44,10 @@ interface FeedPost {
   parentID?: number;
   /** Replies in this thread (if parentID == null) */
   replies: FeedPost[];
+  /** Number of direct replies */
+  nDirectReplies: number;
+  /** Number of likes */
+  nLikes: number;
 }
 
 /** Stores the public global feed. */
@@ -85,18 +89,20 @@ export class ZucastFeed {
 
     // Remove replies to other posts
     // ...keeping only our ancestors
-    const goodIDs = new Set<number>();
+    const ancestors = new Set<number>();
     for (let id: number | undefined = postID; id != null; ) {
-      goodIDs.add(id);
+      ancestors.add(id);
       id = this.feedPosts[id].parentID;
     }
+
     // ...and our descendents
+    const descendents = new Set<number>([postID]);
     const posts = this.feedPosts[rootID].replies
       .filter((p) => {
-        if (p.parentID && goodIDs.has(p.parentID)) {
-          goodIDs.add(p.id);
+        if (p.parentID != null && descendents.has(p.parentID)) {
+          descendents.add(p.id);
         }
-        return goodIDs.has(p.id);
+        return ancestors.has(p.id) || descendents.has(p.id);
       })
       .map(this.toPost);
 
@@ -248,6 +254,8 @@ export class ZucastFeed {
           parentID: action.parentID,
           rootID,
           replies: [],
+          nDirectReplies: 0,
+          nLikes: 0,
         };
 
         // Validate
@@ -262,6 +270,10 @@ export class ZucastFeed {
         this.feedPosts.push(feedPost);
         this.feedUsers[feedUser.uid].posts.push(feedPost);
         this.feedPosts[feedPost.rootID].replies.push(feedPost);
+
+        if (feedPost.parentID != null) {
+          this.feedPosts[feedPost.parentID].nDirectReplies++;
+        }
         break;
 
       case "like":
@@ -285,10 +297,20 @@ export class ZucastFeed {
   }
 
   /** Hydrates API-facing data */
-  private toPost = (post: FeedPost) => {
-    const user = this.toUser(this.feedUsers[post.uid]);
-    const { id, timeMs, content, rootID, parentID } = post;
-    const ret: Post = { id, user, timeMs, content, rootID };
+  private toPost = (feedPost: FeedPost) => {
+    const user = this.toUser(this.feedUsers[feedPost.uid]);
+    const { id, timeMs, content, rootID, parentID } = feedPost;
+    const { nDirectReplies, nLikes } = feedPost;
+
+    const ret: Post = {
+      id,
+      user,
+      timeMs,
+      content,
+      rootID,
+      nDirectReplies,
+      nLikes,
+    };
 
     if (parentID != null) {
       ret.parentID = parentID;

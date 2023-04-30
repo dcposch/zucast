@@ -71,7 +71,7 @@ export function PostBox({
             />
           )}
         </div>
-        <div className="flex flex-col gap-1 py-2">
+        <div className={classNames("flex flex-col gap-1", { "py-2": !big })}>
           <header className={classNames({ "text-lg": big })}>
             <strong>
               {noButtons && <span>#{post.user.uid}</span>}
@@ -96,7 +96,11 @@ export function PostBox({
           <div className={classNames({ "text-xl": big })}>{post.content}</div>
           {!noButtons && (
             <div className="h-4">
-              <IconButton type="reply" val={0} onClick={showCompose} />
+              <IconButton
+                type="reply"
+                val={post.nDirectReplies}
+                onClick={showCompose}
+              />
             </div>
           )}
           <div></div>
@@ -128,7 +132,7 @@ function IconButton({
   return (
     <button
       onClick={handleClick}
-      className="w-7 h-7 rounded-full text-center text-sm text-gray
+      className="w-16 h-6 flex items-end gap-2 -ml-2 px-2 py-1 text-left rounded-md text-sm text-gray
            bg-transparent hover:bg-white-act hover:text-white
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     >

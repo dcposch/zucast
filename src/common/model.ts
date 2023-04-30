@@ -28,6 +28,9 @@ export interface Post {
   parentID?: number;
   /** User we're replying to, if applicable */
   parentUID?: number;
+
+  nDirectReplies: number;
+  nLikes: number;
 }
 
 export interface Thread {
