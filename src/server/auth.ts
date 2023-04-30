@@ -2,7 +2,6 @@ import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
 import { User } from "@/common/model";
 import crypto from "crypto";
 import { GetServerSidePropsContext } from "next";
-import { z } from "zod";
 import { feed } from "./feed";
 
 interface Token {
@@ -64,64 +63,3 @@ export const auth = (function () {
   }
   return auth;
 })();
-
-// TODO: remove
-const tokenModel = z.object({
-  uid: z.number(),
-  exp: z.number(),
-  sig: z.string(),
-  pubKey: z.string(),
-});
-
-// TODO: add sigpcd verifier
-
-// TODO: turn this into a signed-action verifier
-export async function verifyToken(token?: string): Promise<User | undefined> {
-  if (!token) return undefined;
-
-  let uid = null as number | null;
-  try {
-    // Parse token
-    const payload = JSON.parse(token);
-    const tok = tokenModel.parse(payload);
-    uid = tok.uid;
-    const { exp, sig, pubKey } = tok;
-
-    // Verify ECDSA signature
-    const algo = { name: "ECDSA", namedCurve: "P-256" };
-    const key = await crypto.subtle.importKey(
-      "raw",
-      Buffer.from(pubKey, "base64"),
-      algo,
-      false,
-      ["verify"]
-    );
-    const expectedSignedMessage = Buffer.from("zucast" + exp);
-    const verified = await crypto.subtle.verify(
-      algo,
-      key,
-      Buffer.from(sig, "base64"),
-      expectedSignedMessage
-    );
-    if (!verified) {
-      throw new Error("Bad token, invalid signature");
-    }
-
-    // Verify user
-    const user = feed.loadUser(uid);
-    if (user == null || !feed.loadFeedUser(uid).pubKeys.includes(pubKey)) {
-      throw new Error("Bad token, wrong public key for uid");
-    }
-
-    // Verify expiration
-    if (Date.now() > exp) {
-      throw new Error("Expired token");
-    }
-
-    return user;
-  } catch (e: any) {
-    console.error(`Invalid token for ${uid}: ${e?.message}`);
-    console.error(e);
-    return undefined;
-  }
-}
