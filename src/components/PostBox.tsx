@@ -1,20 +1,25 @@
 import { Post } from "@/common/model";
-import { UserIcon } from "./UserIcon";
+import { CommentIcon, HeartIcon } from "@primer/octicons-react";
+import classNames from "classnames";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { MouseEvent, useCallback } from "react";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
-import { useRouter } from "next/router";
-import { useCallback, MouseEvent } from "react";
-import classNames from "classnames";
+import { UserIcon } from "./UserIcon";
 
 export function PostBox({
   post,
   big,
   noButtons,
+  connUp,
+  connDown,
 }: {
   post: Post;
   big?: boolean;
   noButtons?: boolean;
+  connUp?: boolean;
+  connDown?: boolean;
 }) {
   const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
 
@@ -41,15 +46,32 @@ export function PostBox({
 
       <div
         onClick={shouldLink ? goToPost : undefined}
-        className={classNames("flex gap-6 py-2 pr-2", {
+        className={classNames("flex gap-6 pr-2 rounded-lg", {
           "pl-2": !big,
           "cursor-default": !shouldLink,
           "cursor-pointer": shouldLink,
           "hover:bg-white-hov": shouldLink,
         })}
       >
-        <UserIcon user={post.user} big={big} />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
+          {!big && (
+            <div
+              className={classNames("h-2 w-4 border-gray", {
+                "border-r": connUp,
+              })}
+            />
+          )}
+          <UserIcon user={post.user} big={big} />
+          {connDown && (
+            <div
+              className={classNames("flex-grow border-gray border-r", {
+                "w-6": big,
+                "w-4": !big,
+              })}
+            />
+          )}
+        </div>
+        <div className="flex flex-col gap-1 py-2">
           <header className={classNames({ "text-lg": big })}>
             <strong>
               {noButtons && <span>#{post.user.uid}</span>}
@@ -61,17 +83,19 @@ export function PostBox({
               {" · "}
               {noButtons && <span>{time}</span>}
               {!noButtons && <Link href={`/post/${post.id}`}>{time}</Link>}
-              {post.parentID != null && !noButtons && (
+              {post.parentID != null && !noButtons && !connUp && (
                 <>
-                  {" "}
-                  · <Link href={`/post/${post.parentID}`}>reply</Link>
+                  {" · "}
+                  <Link href={`/post/${post.parentID}`}>
+                    replying to #{post.parentUID}
+                  </Link>
                 </>
               )}
             </span>
           </header>
           <div className={classNames({ "text-xl": big })}>{post.content}</div>
           {!noButtons && (
-            <div>
+            <div className="h-4">
               <IconButton type="reply" val={0} onClick={showCompose} />
             </div>
           )}
@@ -91,12 +115,21 @@ function IconButton({
   val: number;
   onClick: () => void;
 }) {
-  const icon = type === "like" ? "♡" : "🗨";
+  const icon = type === "like" ? <HeartIcon /> : <CommentIcon />;
+
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClick();
+    },
+    [onClick]
+  );
+
   return (
     <button
-      onClick={onClick}
-      className="px-2 py-1 rounded-full text-center text-sm text-gray
-           bg-transparent hover:bg-white-hov active:bg-white-act
+      onClick={handleClick}
+      className="w-7 h-7 rounded-full text-center text-sm text-gray
+           bg-transparent hover:bg-white-act hover:text-white
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     >
       {icon} {val > 0 && val}

@@ -1,19 +1,19 @@
 import { SelfContext } from "@/client/self";
 import { useSigningKey } from "@/common/crypto";
-import { Post, User } from "@/common/model";
+import { Thread, User } from "@/common/model";
 import { FeedScreen } from "@/components/FeedScreen";
 import { LoginScreen } from "@/components/LoginScreen";
 import { authenticateRequest } from "@/server/auth";
 import { feed } from "@/server/feed";
-import { GetServerSidePropsContext } from "next";
+import { GetServerSideProps } from "next";
 import { useZupass } from "zukit";
 
 interface HomePageProps {
   user: User | null;
-  posts: Post[];
+  threads: Thread[];
 }
 
-export default function HomePage({ user, posts }: HomePageProps) {
+export default function HomePage({ user, threads }: HomePageProps) {
   const signingKey = useSigningKey();
   const [zupass] = useZupass();
 
@@ -27,18 +27,20 @@ export default function HomePage({ user, posts }: HomePageProps) {
     // Finally, show the feed
     return (
       <SelfContext.Provider value={{ user, signingKey }}>
-        <FeedScreen feed={{ type: "home" }} posts={posts} />
+        <FeedScreen feed={{ type: "home" }} threads={threads} />
       </SelfContext.Provider>
     );
   }
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
+  context
+) => {
   // Authenticate
   const user = authenticateRequest(context.req);
 
   // Load posts only if logged in
-  const posts = user == null ? [] : feed.loadGlobalFeed();
+  const threads = user == null ? [] : feed.loadGlobalFeed();
 
-  return { props: { user, posts } };
-}
+  return { props: { user, threads } };
+};

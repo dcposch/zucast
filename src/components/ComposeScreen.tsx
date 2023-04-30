@@ -61,8 +61,9 @@ export function ComposeScreen({
   if (!self) throw new Error("unreachable");
 
   return (
-    <>
-      {replyTo && <PostBox post={replyTo} noButtons />}
+    <div>
+      {replyTo && <PostBox post={replyTo} noButtons connDown />}
+      {replyTo && <div className="w-6 h-6 border-r border-gray" />}
       <div className="flex-grow flex gap-6 items-stretch">
         <div>
           <UserIcon big user={self.user} />
@@ -88,6 +89,6 @@ export function ComposeScreen({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

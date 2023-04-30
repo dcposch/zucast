@@ -1,4 +1,4 @@
-import { Post, User } from "@/common/model";
+import { Post, Thread, User } from "@/common/model";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { PostBox } from "./PostBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
 import { useEscape } from "@/client/hooks";
+import { ThreadBox } from "./ThreadBox";
 
 type FeedType =
   | { type: "home" }
@@ -23,7 +24,13 @@ type FeedType =
       tab: string;
     };
 
-export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
+export function FeedScreen({
+  feed,
+  threads,
+}: {
+  feed: FeedType;
+  threads: Thread[];
+}) {
   // Compose modal
   const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
 
@@ -33,12 +40,16 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
   // ESC to return to previous feed
   const router = useRouter();
   const goBack = useCallback(
-    () => feed.type !== "home" && router.back(),
+    () => feed.type !== "home" && router.push("/"),
     [feed.type, router]
   );
   useEscape(goBack);
 
-  console.log(`[FEED] ${feed.type} rendering ${posts.length} posts`);
+  // Edge cases
+  const comingSoon = feed.type === "profile" && feed.tab === "likes";
+  const noPostsYet = !comingSoon && threads.length === 0;
+
+  console.log(`[FEED] ${feed.type} rendering ${threads.length} threads`);
 
   return (
     <>
@@ -66,15 +77,14 @@ export function FeedScreen({ feed, posts }: { feed: FeedType; posts: Post[] }) {
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
           <div className="h-4" />
-          {feed.type === "profile" && feed.tab === "likes" && (
+          {comingSoon && (
             <strong className="text-center py-2">coming soon</strong>
           )}
-          {posts.map((post) => (
-            <PostBox
-              key={post.id}
-              post={post}
-              big={post.id === selectedPostID}
-            />
+          {noPostsYet && (
+            <strong className="text-center py-2">no posts yet</strong>
+          )}
+          {threads.map((thread) => (
+            <ThreadBox key={thread.rootID} {...{ thread, selectedPostID }} />
           ))}
         </main>
       </Container>

@@ -43,7 +43,11 @@ export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div className="flex-grow flex flex-col gap-8 items-center">
       <div>
-        <UserIconProfile size="w-12 h-12 text-3xl" profile={profile} />
+        <UserIconProfile
+          size="w-12 h-12 text-3xl"
+          profile={profile}
+          onClick={changeEmoji}
+        />
       </div>
       <div className="grid grid-cols-8">
         {PROFILE_COLORS.map((color) => (

@@ -1,16 +1,16 @@
 import { SelfContext } from "@/client/self";
 import { useSigningKey } from "@/common/crypto";
-import { Post, User } from "@/common/model";
+import { Thread, User } from "@/common/model";
 import { FeedScreen } from "@/components/FeedScreen";
 import { authenticateRequest } from "@/server/auth";
-import { FeedUser, feed } from "@/server/feed";
-import { GetServerSidePropsContext } from "next";
+import { feed } from "@/server/feed";
+import { GetServerSideProps, Redirect } from "next";
 
 interface UserPageProps {
   user: User;
   profileUser: User;
   tab: string;
-  posts: Post[];
+  threads: Thread[];
 }
 
 /** Shows profile information for a single user, plus their latest posts. */
@@ -18,22 +18,27 @@ export default function UserPage({
   user,
   profileUser,
   tab,
-  posts,
+  threads,
 }: UserPageProps) {
   const signingKey = useSigningKey();
 
   if (user == null || signingKey == null) return null;
   return (
     <SelfContext.Provider value={{ user, signingKey }}>
-      <FeedScreen posts={posts} feed={{ type: "profile", profileUser, tab }} />
+      <FeedScreen
+        threads={threads}
+        feed={{ type: "profile", profileUser, tab }}
+      />
     </SelfContext.Provider>
   );
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export const getServerSideProps: GetServerSideProps<UserPageProps> = async (
+  context
+) => {
   // Authenticate
   const user = authenticateRequest(context.req);
-  if (user == null) return { redirect: { destination: "/" } };
+  if (user == null) return { redirect: { destination: "/" } as Redirect };
 
   // Validate inputs
   const uid = Number(context.query.uid);
@@ -42,12 +47,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (profileUser == null) throw new Error("User not found");
 
   // Load posts
-  const [tab, posts] = loadUserTab(uid, context.query.tab as string);
+  const [tab, threads] = loadUserTab(uid, context.query.tab as string);
 
-  return { props: { user, profileUser, tab, posts } };
-}
+  return { props: { user, profileUser, tab, threads } };
+};
 
-function loadUserTab(uid: number, tab: string): [string, Post[]] {
+function loadUserTab(uid: number, tab: string): [string, Thread[]] {
   switch (tab) {
     case "likes":
       return ["likes", []];

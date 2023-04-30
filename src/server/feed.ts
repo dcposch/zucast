@@ -1,5 +1,6 @@
 import {
   EXTERNAL_NULLIFIER,
+  PROFILE_COLORS,
   RATE_LIMIT_ACTIONS_PER_HOUR,
 } from "@/common/constants";
 import {
@@ -12,6 +13,7 @@ import {
   StoredAction,
   StoredActionAct,
   StoredActionAddKey,
+  Thread,
   User,
   actionModel as actionModel,
 } from "../common/model";
@@ -40,6 +42,8 @@ interface FeedPost {
   rootID: number;
   /** Parent ID, or undefined if this is not a reply */
   parentID?: number;
+  /** Replies in this thread (if parentID == null) */
+  replies: FeedPost[];
 }
 
 /** Stores the public global feed. */
@@ -53,21 +57,50 @@ export class ZucastFeed {
   private feedPosts: FeedPost[] = [];
 
   /** Generates a feed of recent posts, newest to oldest. */
-  loadGlobalFeed(): Post[] {
+  loadGlobalFeed(): Thread[] {
     // The Algorithm™
+    const threadIDs = new Set<number>();
     const ret = this.feedPosts
       .slice(-300)
-      .filter((p) => p.parentID == null)
+      .filter((p) => {
+        const alreadyIncluded = threadIDs.has(p.rootID);
+        threadIDs.add(p.rootID);
+        return !alreadyIncluded;
+      })
       .slice(-100)
-      .reverse()
-      .map(this.toPost);
-    console.log(`[FEED] generated global feed, ${ret.length} posts`);
+      .map((p) => this.feedPosts[p.rootID])
+      .map<Thread>((p) => ({
+        rootID: p.id,
+        posts: p.replies.map(this.toPost),
+      }))
+      .reverse();
+    console.log(`[FEED] generated global feed, ${ret.length} threads`);
     return ret;
   }
 
-  /** Loads all replies to a post, oldest to newest. */
-  loadThread(rootID: number): Post[] {
-    return this.feedPosts.filter((p) => p.rootID === rootID).map(this.toPost);
+  /** Loads all replies to a post, including the original, oldest to newest. */
+  loadThread(postID: number): Thread {
+    const feedPost = this.feedPosts[postID];
+    const rootID = feedPost.rootID;
+
+    // Remove replies to other posts
+    // ...keeping only our ancestors
+    const goodIDs = new Set<number>();
+    for (let id: number | undefined = postID; id != null; ) {
+      goodIDs.add(id);
+      id = this.feedPosts[id].parentID;
+    }
+    // ...and our descendents
+    const posts = this.feedPosts[rootID].replies
+      .filter((p) => {
+        if (p.parentID && goodIDs.has(p.parentID)) {
+          goodIDs.add(p.id);
+        }
+        return goodIDs.has(p.id);
+      })
+      .map(this.toPost);
+
+    return { rootID, posts };
   }
 
   /** Loads a single post by ID */
@@ -86,17 +119,19 @@ export class ZucastFeed {
     return this.feedUsers[uid];
   }
 
-  loadUserPosts(uid: number): Post[] {
+  loadUserPosts(uid: number): Thread[] {
     const feedUser = this.feedUsers[uid];
     return feedUser.posts
       .filter((p) => p.parentID == null)
-      .reverse()
-      .map(this.toPost);
+      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(p)] }))
+      .reverse();
   }
 
-  loadUserReplies(uid: number): Post[] {
+  loadUserReplies(uid: number): Thread[] {
     const feedUser = this.feedUsers[uid];
-    return feedUser.posts.slice().reverse().map(this.toPost);
+    return feedUser.posts
+      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(p)] }))
+      .reverse();
   }
 
   /** Performs an action after validation, including verifying its signature. */
@@ -144,7 +179,7 @@ export class ZucastFeed {
         uid: this.feedUsers.length,
         nullifierHash: pcd.claim.nullifierHash,
         profile: {
-          color: "#99bb99",
+          color: PROFILE_COLORS[2],
           emoji: "🥚",
         },
         pubKeys: [],
@@ -212,6 +247,7 @@ export class ZucastFeed {
           content: action.content,
           parentID: action.parentID,
           rootID,
+          replies: [],
         };
 
         // Validate
@@ -225,6 +261,7 @@ export class ZucastFeed {
 
         this.feedPosts.push(feedPost);
         this.feedUsers[feedUser.uid].posts.push(feedPost);
+        this.feedPosts[feedPost.rootID].replies.push(feedPost);
         break;
 
       case "like":
@@ -252,7 +289,11 @@ export class ZucastFeed {
     const user = this.toUser(this.feedUsers[post.uid]);
     const { id, timeMs, content, rootID, parentID } = post;
     const ret: Post = { id, user, timeMs, content, rootID };
-    if (parentID != null) ret.parentID = parentID;
+
+    if (parentID != null) {
+      ret.parentID = parentID;
+      ret.parentUID = this.feedPosts[parentID].uid;
+    }
     return ret;
   };
 }

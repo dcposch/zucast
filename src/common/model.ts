@@ -26,6 +26,14 @@ export interface Post {
   rootID: number;
   /** Parent ID, or undefined if this is not a reply */
   parentID?: number;
+  /** User we're replying to, if applicable */
+  parentUID?: number;
+}
+
+export interface Thread {
+  rootID: number;
+  /** The root post, followed by all replies, in order posted. */
+  posts: Post[];
 }
 
 export const postActionModel = z.object({
