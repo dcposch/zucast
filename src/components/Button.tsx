@@ -38,7 +38,7 @@ export function LinkSquare(props: LinkProps & { children: ReactNode }) {
   return (
     <Link
       {...props}
-      className="inline-block w-8 h-8 rounded-md font-semibold text-center
+      className="w-8 h-8 rounded-md flex justify-center items-center font-semibold
            bg-transparent hover:no-underline hover:bg-white-hov active:bg-white-act
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />

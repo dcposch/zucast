@@ -8,9 +8,11 @@ import { UserIcon } from "./UserIcon";
 export function ThreadBox({
   thread,
   selectedPostID,
+  borderTop,
 }: {
   thread: Thread;
   selectedPostID: number | null;
+  borderTop: boolean;
 }) {
   const [expanded, setExpanded] = useState(() => {
     if (thread.posts.length <= 3) return true;
@@ -22,6 +24,7 @@ export function ThreadBox({
 
   return (
     <>
+      {borderTop && <BorderTop />}
       {expanded &&
         posts.map((post: Post, index: number) => {
           const connUp = index > 0 && post.parentID === posts[index - 1].id;
@@ -77,6 +80,14 @@ function ExpandButton({
           ))}
         </div>
       </ButtonSmall>
+    </div>
+  );
+}
+
+function BorderTop() {
+  return (
+    <div className="flex px-2 py-1">
+      <div className="border-b border-midnight-1 flex-grow" />
     </div>
   );
 }

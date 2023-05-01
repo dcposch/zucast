@@ -196,7 +196,7 @@ function IconButton({
   return (
     <button
       onClick={handleClick}
-      className="w-16 h-6 flex items-end gap-2 -ml-2 px-2 py-1 text-left rounded-md text-sm text-gray
+      className="w-16 h-6 flex items-center gap-2 -ml-2 px-2 py-1 text-left rounded-md text-sm text-gray
            bg-transparent hover:bg-white-act hover:text-white
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     >

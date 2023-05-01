@@ -1,15 +1,18 @@
 import { useEscape } from "@/client/hooks";
 import { Thread, User } from "@/common/model";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
-import { useCallback } from "react";
-import { Button, LinkSquare } from "./Button";
+import { useCallback, useContext } from "react";
+import { Button, ButtonSquare, LinkSquare } from "./Button";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
 import { Modal } from "./Modal";
 import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
+import { PersonIcon } from "@primer/octicons-react";
+import { SelfContext } from "@/client/self";
 
 type FeedType =
   | { type: "home" }
@@ -61,16 +64,7 @@ export function FeedScreen({
         </Modal>
       )}
       <Container>
-        <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">
-          <H2>
-            {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
-            {feed.type !== "home" && <div className="inline-block w-2" />}
-            {feed.type === "home" && "Home"}
-            {feed.type === "thread" && "Thread"}
-            {feed.type === "profile" && `#${feed.profileUser.uid}`}
-          </H2>
-          <Button onClick={showCompose}>Post</Button>
-        </header>
+        <FeedHeader feed={feed} showCompose={showCompose} />
         <main className="flex flex-col">
           {feed.type === "profile" && (
             <UserDetails tab={feed.tab} user={feed.profileUser} />
@@ -82,11 +76,54 @@ export function FeedScreen({
           {noPostsYet && (
             <strong className="text-center py-2">no posts yet</strong>
           )}
-          {threads.map((thread) => (
-            <ThreadBox key={thread.rootID} {...{ thread, selectedPostID }} />
+          {threads.map((thread, i) => (
+            <ThreadBox
+              key={thread.rootID}
+              borderTop={i > 0}
+              {...{ thread, selectedPostID }}
+            />
           ))}
         </main>
       </Container>
     </>
+  );
+}
+
+function FeedHeader({
+  feed,
+  showCompose,
+}: {
+  feed: FeedType;
+  showCompose: () => void;
+}) {
+  const self = useContext(SelfContext);
+  if (!self) throw new Error("unreachable");
+
+  const { uid } = self.user;
+  const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
+  const router = useRouter();
+  const goToSelf = useCallback(
+    () => router.push(`/user/${uid}`),
+    [router, uid]
+  );
+
+  return (
+    <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">
+      <H2>
+        <div className="w-32 flex items-center gap-2">
+          {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
+          {feed.type === "home" && "Home"}
+          {feed.type === "thread" && "Thread"}
+          {feed.type === "profile" && `#${feed.profileUser.uid}`}
+        </div>
+      </H2>
+      <Image priority src="/logo-160.png" width={40} height={40} alt="Logo" />
+      <div className="w-32 flex justify-end items-center gap-2">
+        <ButtonSquare onClick={goToSelf} disabled={isViewingSelf}>
+          <PersonIcon />
+        </ButtonSquare>
+        <Button onClick={showCompose}>Post</Button>
+      </div>
+    </header>
   );
 }
