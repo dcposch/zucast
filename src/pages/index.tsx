@@ -1,10 +1,12 @@
 import { SelfContext } from "@/client/self";
+import { EXTERNAL_NULLIFIER } from "@/common/constants";
 import { useSigningKey } from "@/common/crypto";
 import { Thread, User } from "@/common/model";
 import { FeedScreen } from "@/components/FeedScreen";
-import { LoginScreen } from "@/components/LoginScreen";
-import { server, feed } from "@/server";
+import { LoginScreen, logoutAndReload } from "@/components/LoginScreen";
+import { feed, server } from "@/server";
 import { GetServerSideProps } from "next";
+import { useEffect } from "react";
 import { useZupass } from "zukit";
 
 interface HomePageProps {
@@ -15,6 +17,8 @@ interface HomePageProps {
 export default function HomePage({ user, threads }: HomePageProps) {
   const signingKey = useSigningKey();
   const [zupass] = useZupass();
+
+  useEffect(() => logoutIfInvalidPCD(zupass), [zupass]);
 
   if (signingKey == null) {
     // First, wait for the signing key to generate (nearly instant)
@@ -43,3 +47,14 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
 
   return { props: { user, threads } };
 };
+
+function logoutIfInvalidPCD(zupass: ReturnType<typeof useZupass>[0]) {
+  if (
+    zupass.status === "logged-in" &&
+    zupass.anonymous &&
+    zupass.pcd.claim.externalNullifier !== "" + EXTERNAL_NULLIFIER
+  ) {
+    console.log("[HOME] logging out, wrong external nullifier");
+    logoutAndReload();
+  }
+}
