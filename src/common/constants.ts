@@ -18,3 +18,6 @@ export const PROFILE_COLORS = (function () {
   }
   return colors;
 })();
+
+import tailwind from "../../tailwind.config";
+export const THEME_COLORS = tailwind?.theme?.colors as Record<string, string>;

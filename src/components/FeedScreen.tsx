@@ -11,8 +11,9 @@ import { Modal } from "./Modal";
 import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
-import { PersonIcon } from "@primer/octicons-react";
+import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
 import { SelfContext } from "@/client/self";
+import { THEME_COLORS } from "@/common/constants";
 
 type FeedType =
   | { type: "home" }
@@ -47,10 +48,6 @@ export function FeedScreen({
   );
   useEscape(goBack);
 
-  // Edge cases
-  const comingSoon = feed.type === "profile" && feed.tab === "likes";
-  const noPostsYet = !comingSoon && threads.length === 0;
-
   console.log(`[FEED] ${feed.type} rendering ${threads.length} threads`);
 
   return (
@@ -70,15 +67,12 @@ export function FeedScreen({
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
           <div className="h-4" />
-          {comingSoon && (
-            <strong className="text-center py-2">coming soon</strong>
-          )}
-          {noPostsYet && (
+          {threads.length === 0 && (
             <strong className="text-center py-2">no posts yet</strong>
           )}
           {threads.map((thread, i) => (
             <ThreadBox
-              key={thread.rootID}
+              key={`thread-${thread.rootID}-${thread.posts[0].id}`}
               borderTop={i > 0}
               {...{ thread, selectedPostID }}
             />
@@ -120,7 +114,8 @@ function FeedHeader({
       <Image priority src="/logo-160.png" width={40} height={40} alt="Logo" />
       <div className="w-32 flex justify-end items-center gap-2">
         <ButtonSquare onClick={goToSelf} disabled={isViewingSelf}>
-          <PersonIcon />
+          {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
+          {!isViewingSelf && <PersonIcon />}
         </ButtonSquare>
         <Button onClick={showCompose}>Post</Button>
       </div>

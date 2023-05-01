@@ -58,7 +58,7 @@ function loadUserTab(
 ): [string, Thread[]] {
   switch (tab) {
     case "likes":
-      return ["likes", []];
+      return ["likes", feed.loadUserLikes(authUID, uid)];
     case "replies":
       return ["replies", feed.loadUserReplies(authUID, uid)];
     default:

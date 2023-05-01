@@ -30,6 +30,8 @@ export interface FeedUser extends User {
   posts: FeedPost[];
   /** Recent actions, for rate limiting and ranking. */
   recentActions: StoredAction[];
+  /** Posts liked by this user */
+  likedPosts: FeedPost[];
 }
 
 interface FeedPost {
@@ -160,6 +162,13 @@ export class ZucastFeed {
       .reverse();
   }
 
+  loadUserLikes(authUID: number, uid: number): Thread[] {
+    const feedUser = this.feedUsers[uid];
+    return feedUser.likedPosts
+      .map((p) => ({ rootID: p.rootID, posts: [this.toPost(authUID, p)] }))
+      .reverse();
+  }
+
   /** Fast-path login. */
   loadUserByPubKey(pubKeyHash: string): User | undefined {
     const feedUser = this.feedUsersByPubKeyHex.get(pubKeyHash);
@@ -247,6 +256,7 @@ export class ZucastFeed {
       pubKeys: [],
       posts: [],
       recentActions: [],
+      likedPosts: [],
     };
     this.feedUsers.push(ret);
     this.feedUsersByNullifierHash.set(pcd.claim.nullifierHash, ret);
@@ -376,11 +386,14 @@ export class ZucastFeed {
         throw new Error("Ignoring like, already liked");
       }
       feedPost.likedBy.add(uid);
+      feedUser.likedPosts.push(feedPost);
     } else {
       if (!feedPost.likedBy.has(uid)) {
         throw new Error("Ignoring unlike, no like found");
       }
       feedPost.likedBy.delete(uid);
+      const ix = feedUser.likedPosts.indexOf(feedPost);
+      if (ix >= 0) feedUser.likedPosts.splice(ix, 1);
     }
     feedPost.nLikes += delta;
   }

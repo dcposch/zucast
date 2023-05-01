@@ -165,7 +165,7 @@ function PostContent({ content, big }: { content: string; big?: boolean }) {
       <span key={i}>
         {part}
         {link && (
-          <a key={i} href={link} rel="noreferrer" target="_blank">
+          <a href={link} rel="noreferrer" target="_blank">
             {link}
           </a>
         )}
