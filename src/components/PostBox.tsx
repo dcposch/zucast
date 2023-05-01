@@ -1,4 +1,4 @@
-import { useSendAction } from "@/client/hooks";
+import { useModal, useSendAction } from "@/client/hooks";
 import { Post } from "@/common/model";
 import { CommentIcon, HeartFillIcon, HeartIcon } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { MouseEvent, useCallback, useEffect, useState } from "react";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
+import { PostLikersScreen } from "./PostLikersScreen";
 import { UserIcon } from "./UserIcon";
 
 export function useLikePost(post: Post) {
@@ -65,12 +66,18 @@ export function PostBox({
 
   // Like and unlike the post
   const [liked, nLikes, toggleLike] = useLikePost(post);
+  const [isLikersOpen, showLikers, hideLikers] = useModal();
 
   return (
     <>
       {isOpen && (
         <Modal onClose={hideCompose} title="Reply">
           <ComposeScreen onSuccess={postSucceeded} replyTo={post} />
+        </Modal>
+      )}
+      {isLikersOpen && (
+        <Modal onClose={hideLikers} title={`${nLikes} anons liked this post`}>
+          <PostLikersScreen postID={post.id} />
         </Modal>
       )}
 
@@ -107,6 +114,11 @@ export function PostBox({
                 val={nLikes}
                 onClick={toggleLike}
               />
+              {big && nLikes > 0 && (
+                <BottomButton onClick={showLikers}>
+                  {nLikes} {nLikes === 1 ? "like" : "likes"}
+                </BottomButton>
+              )}
             </div>
           )}
         </div>
@@ -217,14 +229,20 @@ function IconButton({
   );
 
   return (
+    <BottomButton onClick={handleClick}>
+      {icon} {val > 0 && val}
+    </BottomButton>
+  );
+}
+
+function BottomButton(props: JSX.IntrinsicElements["button"]) {
+  return (
     <button
-      onClick={handleClick}
+      {...props}
       className="w-16 h-6 flex items-center gap-2 -ml-2 px-2 py-1 text-left rounded-md text-sm text-gray
            bg-transparent hover:bg-white-act hover:text-white
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
-    >
-      {icon} {val > 0 && val}
-    </button>
+    />
   );
 }
 

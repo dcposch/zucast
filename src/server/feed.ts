@@ -169,6 +169,13 @@ export class ZucastFeed {
       .reverse();
   }
 
+  loadLikers(postID: number): User[] {
+    const feedPost = this.feedPosts[postID];
+    return Array.from(feedPost.likedBy)
+      .sort()
+      .map((uid) => this.toUser(this.feedUsers[uid]));
+  }
+
   /** Fast-path login. */
   loadUserByPubKey(pubKeyHash: string): User | undefined {
     const feedUser = this.feedUsersByPubKeyHex.get(pubKeyHash);

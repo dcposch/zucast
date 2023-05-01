@@ -1,6 +1,6 @@
 import { sign } from "@/common/crypto";
 import { Action } from "@/common/model";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { SelfContext } from "./self";
 import { trpc } from "./trpc";
 
@@ -45,4 +45,12 @@ export function useEscape(callback: () => void) {
       escHandlers.pop();
     };
   }, [callback]);
+}
+
+/** Convenience hook for modal parent state */
+export function useModal() {
+  const [isOpen, setOpen] = useState(false);
+  const show = useCallback(() => setOpen(true), []);
+  const hide = useCallback(() => setOpen(false), []);
+  return [isOpen, show, hide] as const;
 }

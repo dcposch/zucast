@@ -1,5 +1,5 @@
 import Link, { LinkProps } from "next/link";
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode, StyleHTMLAttributes } from "react";
 
 export function Button(props: JSX.IntrinsicElements["button"]) {
   return (
@@ -15,6 +15,22 @@ export function Button(props: JSX.IntrinsicElements["button"]) {
 export function ButtonSmall(props: JSX.IntrinsicElements["button"]) {
   return (
     <button
+      {...props}
+      className="px-4 py-2 rounded-md font-semibold text-center
+           bg-transparent hover:bg-white-hov active:bg-white-act
+           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
+    />
+  );
+}
+
+export function LinkSmall(
+  props: LinkProps & {
+    children: ReactNode;
+    style?: CSSProperties;
+  }
+) {
+  return (
+    <Link
       {...props}
       className="px-4 py-2 rounded-md font-semibold text-center
            bg-transparent hover:bg-white-hov active:bg-white-act

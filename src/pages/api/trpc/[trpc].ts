@@ -47,14 +47,14 @@ const appRouter = router({
       return { success: true };
     }),
 
-  loadUser: publicProcedure
+  loadLikers: publicProcedure
     .input(
       z.object({
-        uid: z.number(),
+        postID: z.number(),
       })
     )
     .query(({ input }) => {
-      return feed.loadUser(input.uid);
+      return feed.loadLikers(input.postID);
     }),
 });
 
