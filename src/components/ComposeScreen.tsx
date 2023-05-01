@@ -13,6 +13,7 @@ import {
 import { Button } from "./Button";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
+import classNames from "classnames";
 
 export function useComposeModal() {
   const [isOpen, setOpen] = useState(false);
@@ -82,9 +83,7 @@ export function ComposeScreen({
             ref={focus}
           />
           <div className="flex justify-between items-baseline">
-            <span className={charsLeft < 0 ? "text-error" : "text-gray"}>
-              {charsLeft}/{maxChars}
-            </span>
+            <CharsLeft {...{ charsLeft, maxChars }} />
             <Button disabled={sendDisabled} onClick={sendPost}>
               Send
             </Button>
@@ -95,5 +94,14 @@ export function ComposeScreen({
         </div>
       </div>
     </div>
+  );
+}
+
+function CharsLeft(props: { charsLeft: number; maxChars: number }) {
+  const color = props.charsLeft < 0 ? "text-error" : "text-gray";
+  return (
+    <span className={classNames("tabular-nums", color)}>
+      {props.charsLeft}/{props.maxChars}
+    </span>
   );
 }

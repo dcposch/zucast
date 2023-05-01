@@ -12,7 +12,7 @@ import { useRouter } from "next/router";
 
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
-  const addKey = trpc.addKey.useMutation();
+  const login = trpc.login.useMutation();
 
   // Delete stale cookies, if any
   useEffect(() => {
@@ -24,22 +24,22 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
     if (zupass.status !== "logged-in") return;
     console.log(`[LOGIN] uploading signing key`);
     const { pubKeyHex } = signingKey;
-    addKey.mutate({ pcd: JSON.stringify(zupass.serializedPCD), pubKeyHex });
+    login.mutate({ pcd: JSON.stringify(zupass.serializedPCD), pubKeyHex });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zupass.status]);
 
   // Once that succeeds, set the zucastToken cookie, giving us read access
   const router = useRouter();
   useEffect(() => {
-    if (addKey.isSuccess) {
-      const token = addKey.data;
+    if (login.isSuccess) {
+      const token = login.data;
       console.log(`[LOGIN] setting cookie ${token}`);
       document.cookie = `${COOKIE_ZUCAST_TOKEN}=${token}; path=/`;
 
       // Load the feed
       router.replace(router.asPath);
     }
-  }, [addKey, router]);
+  }, [login, router]);
 
   return (
     <>
@@ -50,7 +50,13 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
         <div className="leading-normal flex flex-col gap-4 text-center items-center">
           <div className="h-8" />
           <div className="-my-3">
-            <Image src="/logo-160.png" width={80} height={80} alt="Logo" />
+            <Image
+              priority
+              src="/logo-160.png"
+              width={80}
+              height={80}
+              alt="Logo"
+            />
           </div>
           <H1>Zucast</H1>
           <p>

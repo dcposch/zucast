@@ -3,14 +3,13 @@
  * On a bigger app, you will probably want to split this file up into multiple files.
  */
 import { StoredAction } from "@/common/model";
-import { auth } from "@/server/auth";
-import { feed } from "@/server/feed";
+import { feed, auth } from "@/server";
 import { publicProcedure, router } from "@/server/trpc";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
 
 const appRouter = router({
-  addKey: publicProcedure
+  login: publicProcedure
     .input(
       z.object({
         pcd: z.string(),
@@ -18,12 +17,17 @@ const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      console.log(`[TRPC] addKey`);
-      const timeMs = Date.now();
-      const sa: StoredAction = { ...input, timeMs, type: "addKey" };
-      const user = await feed.verifyExec(sa);
+      console.log(`[TRPC] login request for ${input.pubKeyHex}`);
 
-      console.log(`[TRPC] addKey success, creating token for user ${user.uid}`);
+      let user = feed.loadUserByPubKey(input.pubKeyHex);
+      if (user == null) {
+        console.log(`[TRPC] login creating new user`);
+        const timeMs = Date.now();
+        const sa: StoredAction = { ...input, timeMs, type: "addKey" };
+        user = await feed.append(sa);
+      }
+
+      console.log(`[TRPC] login success, creating token for user ${user.uid}`);
       const token = auth.createToken(user.uid);
       return token;
     }),
@@ -39,11 +43,11 @@ const appRouter = router({
     )
     .mutation(async ({ input }) => {
       const timeMs = Date.now();
-      await feed.verifyExec({ ...input, timeMs, type: "act" });
+      await feed.append({ ...input, timeMs, type: "act" });
       return { success: true };
     }),
 
-  user: publicProcedure
+  loadUser: publicProcedure
     .input(
       z.object({
         uid: z.number(),

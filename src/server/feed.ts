@@ -7,6 +7,7 @@ import { verifySignature } from "@/common/crypto";
 import { validatePost, validateProfile } from "@/common/validation";
 import { SerializedPCD } from "@pcd/pcd-types";
 import {
+  SemaphoreGroupPCD,
   SemaphoreGroupPCDPackage,
   generateMessageHash,
 } from "@pcd/semaphore-group-pcd";
@@ -20,6 +21,7 @@ import {
   User,
   actionModel,
 } from "../common/model";
+import { TypedEvent } from "./event";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -56,11 +58,27 @@ interface FeedPost {
 export class ZucastFeed {
   /** Append-only feed of stored actions. Everything else is derived. */
   private storedActions: StoredAction[] = [];
+
+  /** False on server start, true once the action log has loaded & verified. */
+  private isInited = false;
+  /** Event triggered after an action has been verified and executed. */
+  onStoredAction = new TypedEvent<{ id: number; action: StoredAction }>();
+
   /** Anonymous users */
   private feedUsers: FeedUser[] = [];
   private feedUsersByNullifierHash: Map<string, FeedUser> = new Map();
+  private feedUsersByPubKeyHex: Map<string, FeedUser> = new Map();
   /** Their posts */
   private feedPosts: FeedPost[] = [];
+
+  /** Initializes the feed from a list of stored actions */
+  async init(actions: StoredAction[]) {
+    console.log(`[FEED] initializing feed from ${actions.length} actions`);
+    for (const action of actions) {
+      await this.verifyExec(action);
+    }
+    this.isInited = true;
+  }
 
   /** Generates a feed of recent posts, newest to oldest. */
   loadGlobalFeed(authUID: number): Thread[] {
@@ -142,8 +160,24 @@ export class ZucastFeed {
       .reverse();
   }
 
-  /** Performs an action after validation, including verifying its signature. */
-  async verifyExec(sa: StoredAction): Promise<User> {
+  /** Fast-path login. */
+  loadUserByPubKey(pubKeyHash: string): User | undefined {
+    const feedUser = this.feedUsersByPubKeyHex.get(pubKeyHash);
+    return feedUser ? this.toUser(feedUser) : undefined;
+  }
+
+  /**
+   * Performs an action after validation, including verifying its signature.
+   * This is the ONLY public function that modifies the feed.
+   */
+  async append(sa: StoredAction): Promise<User> {
+    if (!this.isInited) {
+      throw new Error("Feed initializing, try again soon");
+    }
+    return this.verifyExec(sa);
+  }
+
+  private async verifyExec(sa: StoredAction): Promise<User> {
     const { type } = sa;
     const feedUser = await (() => {
       switch (type) {
@@ -156,7 +190,11 @@ export class ZucastFeed {
       }
     })();
 
+    // Log action, emit event
+    const id = this.storedActions.length;
     this.storedActions.push(sa);
+    this.onStoredAction.emit({ id, action: sa });
+
     return this.toUser(feedUser);
   }
 
@@ -168,37 +206,51 @@ export class ZucastFeed {
   private async verifyExecAddKey(sa: StoredActionAddKey) {
     // Parse and verify the PCD
     const serPCD = JSON.parse(sa.pcd) as SerializedPCD;
+
     console.log(`[FEED] addKey verifying ${serPCD.type}`);
     console.log(serPCD.pcd);
     const pcd = await SemaphoreGroupPCDPackage.deserialize(serPCD.pcd);
     const valid = await SemaphoreGroupPCDPackage.verify(pcd);
+
+    // Validate PCD contents
     if (!valid) {
       throw new Error(`Invalid PCD, ignoring addKey`);
     } else if (pcd.claim.externalNullifier !== "" + EXTERNAL_NULLIFIER) {
       throw new Error(`Wrong externalNullifier, ignoring addKey`);
     } else if (pcd.claim.signal !== "" + generateMessageHash(sa.pubKeyHex)) {
       throw new Error(`Wrong signal, ignoring addKey`);
+    } else if (this.feedUsersByPubKeyHex.has(sa.pubKeyHex)) {
+      throw new Error(`Pubkey already exists, ignoring addKey`);
     }
 
+    // Create a new user if necessary
     let feedUser = this.feedUsersByNullifierHash.get(pcd.claim.nullifierHash);
     if (feedUser == null) {
-      console.log(`[FEED] new user ${pcd.claim.nullifierHash}`);
-      feedUser = {
-        uid: this.feedUsers.length,
-        nullifierHash: pcd.claim.nullifierHash,
-        profile: {
-          color: PROFILE_COLORS[2],
-          emoji: "🥚",
-        },
-        pubKeys: [],
-        posts: [],
-        recentActions: [],
-      };
-      this.feedUsers.push(feedUser);
-      this.feedUsersByNullifierHash.set(pcd.claim.nullifierHash, feedUser);
+      feedUser = this.createUser(pcd);
     }
+
+    // Either way, add a pubKey to the user
     feedUser.pubKeys.push(sa.pubKeyHex);
+    this.feedUsersByPubKeyHex.set(sa.pubKeyHex, feedUser);
+
     return feedUser;
+  }
+
+  /** Creates a new user from an already-verified PCD */
+  private createUser(pcd: SemaphoreGroupPCD) {
+    console.log(`[FEED] new user ${pcd.claim.nullifierHash}`);
+    const ret: FeedUser = {
+      uid: this.feedUsers.length,
+      nullifierHash: pcd.claim.nullifierHash,
+      // Everyone starts as an egg
+      profile: { color: PROFILE_COLORS[2], emoji: "🥚" },
+      pubKeys: [],
+      posts: [],
+      recentActions: [],
+    };
+    this.feedUsers.push(ret);
+    this.feedUsersByNullifierHash.set(pcd.claim.nullifierHash, ret);
+    return ret;
   }
 
   /** Verifies a signing-key signature, then records the (post, like, etc) */
@@ -229,17 +281,13 @@ export class ZucastFeed {
 
     // Finally, try to execute the action
     const action = actionModel.parse(JSON.parse(sa.actionJSON));
-    this.executeUserAction(feedUser, action, sa.timeMs);
+    this.execUserAction(feedUser, action, sa.timeMs);
 
     return feedUser;
   }
 
   /** Executes and already-verified user action, such as a new post. */
-  private executeUserAction(
-    feedUser: FeedUser,
-    action: Action,
-    timeMs: number
-  ) {
+  private execUserAction(feedUser: FeedUser, action: Action, timeMs: number) {
     const { type } = action;
     switch (type) {
       case "post": {
@@ -368,13 +416,3 @@ export class ZucastFeed {
     return ret;
   };
 }
-
-// NextJS workaround.
-export const feed = (function () {
-  const key = "ZucastFeed";
-  let auth = (global as any)[key] as ZucastFeed;
-  if (!auth) {
-    auth = (global as any)[key] = new ZucastFeed();
-  }
-  return auth;
-})();

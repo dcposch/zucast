@@ -94,7 +94,11 @@ export function PostBox({
         {/** Right: header, post content, reply+like buttons */}
         <div className={classNames("flex flex-col gap-1", { "pt-2": !big })}>
           <PostHeader {...{ post, time, big, connUp, noButtons }} />
-          <div className={classNames({ "text-xl": big })}>{post.content}</div>
+          <div
+            className={classNames("whitespace-pre-wrap", { "text-xl": big })}
+          >
+            {post.content}
+          </div>
           {!noButtons && (
             <div className="flex gap-1">
               <IconButton

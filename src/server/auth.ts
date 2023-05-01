@@ -1,46 +1,34 @@
-import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
-import { User } from "@/common/model";
 import crypto from "crypto";
-import { GetServerSidePropsContext } from "next";
-import { feed } from "./feed";
+import { TypedEvent } from "./event";
 
-interface Token {
+export interface AuthToken {
   cookie: string;
   uid: number;
   createdMs: number;
 }
 
-/** Cookie authentication */
-export function authenticateRequest(
-  req: GetServerSidePropsContext["req"]
-): User | null {
-  const token = req.cookies[COOKIE_ZUCAST_TOKEN];
-  const loggedInUid = auth.authenticate(token);
-  if (loggedInUid == null) return null;
-  const { uid, nullifierHash, profile } = feed.loadUser(loggedInUid);
-  const user: User = { uid, nullifierHash, profile };
-  return user;
-}
-
 /** Cookie authentication for view only. All actions are individually signed. */
 export class ZucastAuth {
   /** List of active tokens. Everything else is derived. */
-  tokens: Token[] = [];
+  tokens: AuthToken[] = [];
   /** Map from cookie to logged-in user. */
-  tokenMap: Map<string, Token> = new Map();
+  tokenMap: Map<string, AuthToken> = new Map();
+  /** Event triggered after a new token has been added. */
+  onTokenAdded = new TypedEvent<AuthToken>();
 
   createToken(uid: number): string {
     const randomBytes = crypto.getRandomValues(new Uint8Array(32));
     const cookie = Buffer.from(randomBytes).toString("base64");
     const createdMs = Date.now();
+    console.log(`[AUTH] create token ${cookie} for ${uid}`);
     this.addToken({ cookie, uid, createdMs });
     return cookie;
   }
 
-  addToken(token: Token) {
-    console.log(`[AUTH] add token ${token.cookie} for ${token.uid}`);
+  addToken(token: AuthToken) {
     this.tokens.push(token);
     this.tokenMap.set(token.cookie, token);
+    this.onTokenAdded.emit(token);
   }
 
   authenticate(cookie?: string): number | null {
@@ -53,13 +41,3 @@ export class ZucastAuth {
     return token.uid;
   }
 }
-
-// NextJS workaround.
-export const auth = (function () {
-  const key = "ZucastAuth";
-  let auth = (global as any)[key] as ZucastAuth;
-  if (!auth) {
-    auth = (global as any)[key] = new ZucastAuth();
-  }
-  return auth;
-})();

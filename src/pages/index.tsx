@@ -3,8 +3,7 @@ import { useSigningKey } from "@/common/crypto";
 import { Thread, User } from "@/common/model";
 import { FeedScreen } from "@/components/FeedScreen";
 import { LoginScreen } from "@/components/LoginScreen";
-import { authenticateRequest } from "@/server/auth";
-import { feed } from "@/server/feed";
+import { server, feed } from "@/server";
 import { GetServerSideProps } from "next";
 import { useZupass } from "zukit";
 
@@ -37,7 +36,7 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
   context
 ) => {
   // Authenticate
-  const user = authenticateRequest(context.req);
+  const user = server.authenticateRequest(context.req);
 
   // Load posts only if logged in
   const threads = user == null ? [] : feed.loadGlobalFeed(user.uid);
