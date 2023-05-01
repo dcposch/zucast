@@ -10,14 +10,18 @@ import Head from "next/head";
 import { H1 } from "./typography";
 import { useRouter } from "next/router";
 
+export function logoutAndReload() {
+  clearCookie();
+  localStorage.clear();
+  window.location.reload();
+}
+
 export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
   const [zupass] = useZupass();
   const login = trpc.login.useMutation();
 
   // Delete stale cookies, if any
-  useEffect(() => {
-    document.cookie = `${COOKIE_ZUCAST_TOKEN}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
-  }, []);
+  useEffect(clearCookie, []);
 
   // Once we have a proof from the Zuzalu Passport, upload our signing key
   useEffect(() => {
@@ -86,4 +90,8 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
       </Container>
     </>
   );
+}
+
+function clearCookie() {
+  document.cookie = `${COOKIE_ZUCAST_TOKEN}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
 }

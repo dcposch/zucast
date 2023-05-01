@@ -5,6 +5,7 @@ import { validateEmoji } from "@/common/validation";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Button, ButtonSmall } from "./Button";
 import { UserIconProfile } from "./UserIcon";
+import { logoutAndReload } from "./LoginScreen";
 
 export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
   // In-progress profile edit
@@ -63,6 +64,9 @@ export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
       <div className="flex justify-between w-64">
         <ButtonSmall onClick={changeEmoji}>Change emoji</ButtonSmall>
         <Button onClick={saveProfile}>Save</Button>
+      </div>
+      <div className="flex justify-center">
+        <ButtonSmall onClick={logoutAndReload}>Log out</ButtonSmall>
       </div>
       <div>
         {result.error && (
