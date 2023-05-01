@@ -94,11 +94,7 @@ export function PostBox({
         {/** Right: header, post content, reply+like buttons */}
         <div className={classNames("flex flex-col gap-1", { "pt-2": !big })}>
           <PostHeader {...{ post, time, big, connUp, noButtons }} />
-          <div
-            className={classNames("whitespace-pre-wrap", { "text-xl": big })}
-          >
-            {post.content}
-          </div>
+          <PostContent content={post.content} big={big} />
           {!noButtons && (
             <div className="flex gap-1">
               <IconButton
@@ -154,6 +150,33 @@ function PostHeader({
         )}
       </span>
     </header>
+  );
+}
+
+function PostContent({ content, big }: { content: string; big?: boolean }) {
+  // Parse out URLs, turn them into links
+  const regexURL = /https?:\/\/\S+/g;
+  const parts = content.split(regexURL);
+  const matches = content.match(regexURL);
+
+  const contentElems = parts.map((part, i) => {
+    let link = matches != null && matches[i] != null && matches[i];
+    return (
+      <span key={i}>
+        {part}
+        {link && (
+          <a key={i} href={link} rel="noreferrer" target="_blank">
+            {link}
+          </a>
+        )}
+      </span>
+    );
+  });
+
+  return (
+    <div className={classNames("whitespace-pre-wrap", { "text-xl": big })}>
+      {contentElems}
+    </div>
   );
 }
 
