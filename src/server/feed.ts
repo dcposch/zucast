@@ -3,7 +3,7 @@ import {
   PROFILE_COLORS,
   RATE_LIMIT_ACTIONS_PER_HOUR,
 } from "@/common/constants";
-import { verifySignature } from "@/common/crypto";
+import { isValidZuzaluMerkleRoot, verifySignature } from "@/common/crypto";
 import { validatePost, validateProfile } from "@/common/validation";
 import { SerializedPCD } from "@pcd/pcd-types";
 import {
@@ -22,6 +22,7 @@ import {
   actionModel,
 } from "../common/model";
 import { TypedEvent } from "./event";
+import { verify } from "crypto";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -76,10 +77,13 @@ export class ZucastFeed {
   /** Initializes the feed from a list of stored actions */
   async init(actions: StoredAction[]) {
     console.log(`[FEED] initializing feed from ${actions.length} actions`);
+    const startMs = performance.now();
     for (const action of actions) {
       await this.verifyExec(action);
     }
     this.isInited = true;
+    const elapsedS = (performance.now() - startMs) / 1000;
+    console.log(`[FEED] initialized feed in ${elapsedS.toFixed(1)}s`);
   }
 
   /** Generates a feed of recent posts, newest to oldest. */
@@ -237,6 +241,8 @@ export class ZucastFeed {
       throw new Error(`Wrong signal, ignoring addKey`);
     } else if (this.feedUsersByPubKeyHex.has(sa.pubKeyHex)) {
       throw new Error(`Pubkey already exists, ignoring addKey`);
+    } else if (!(await isValidZuzaluMerkleRoot(pcd.claim.merkleRoot))) {
+      throw new Error(`Invalid Zuzalu merkle root, ignoring addKey`);
     }
 
     // Create a new user if necessary

@@ -109,3 +109,38 @@ export async function verifySignature(
     throw new Error(`Invalid signature`);
   }
 }
+
+const merkleRoots: Map<string, Promise<boolean>> = new Map();
+
+/** Verifies a group */
+export async function isValidZuzaluMerkleRoot(root: string) {
+  let promise = merkleRoots.get(root);
+  if (promise == null) {
+    promise = fetchIsValidRoot(root);
+    merkleRoots.set(root, promise);
+  }
+  const ret = await promise;
+
+  console.log(`[CRYPTO] merkle root ${root} is ${ret ? "valid" : "invalid"}`);
+  return ret;
+}
+
+export async function preloadLatestRoot() {
+  const url = "https://api.pcd-passport.com/semaphore/latest-root/1";
+  console.log(`[CRYPTO] fetching latest merkle root ${url}`);
+
+  const res = await fetch(url);
+  if (res.status !== 200) throw new Error(`Error ${res.status} fetching root`);
+  const root = await res.json();
+  merkleRoots.set(root, Promise.resolve(true));
+}
+
+async function fetchIsValidRoot(root: string) {
+  const url = `https://api.pcd-passport.com/semaphore/historic/1/${root}`;
+  console.log(`[CRYPTO] fetching merkle root ${url}`);
+
+  const res = await fetch(url);
+  if (res.status === 200) return true;
+  else if (res.status === 404) return false;
+  throw new Error(`Server error ${res.status} fetching merkle root ${root}`);
+}

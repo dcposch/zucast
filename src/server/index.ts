@@ -4,6 +4,7 @@ import { GetServerSidePropsContext } from "next";
 import { ZucastAuth } from "./auth";
 import { DB } from "./db";
 import { ZucastFeed } from "./feed";
+import { preloadLatestRoot } from "@/common/crypto";
 
 class ZucastServer {
   db: DB;
@@ -28,6 +29,9 @@ class ZucastServer {
     feed.onStoredAction.on(({ id, action }) =>
       this.db.saveStoredAction(id, action)
     );
+
+    preloadLatestRoot();
+    setInterval(preloadLatestRoot, 1000 * 60 * 5);
   }
 
   /** Cookie authentication */
