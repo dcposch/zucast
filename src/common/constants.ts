@@ -1,6 +1,6 @@
 export const COOKIE_ZUCAST_TOKEN = "zucastToken";
 
-export const EXTERNAL_NULLIFIER = BigInt(42);
+export const EXTERNAL_NULLIFIER = BigInt(420);
 
 export const MAX_POST_LENGTH = 280;
 
