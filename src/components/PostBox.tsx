@@ -68,6 +68,16 @@ export function PostBox({
   const [liked, nLikes, toggleLike] = useLikePost(post);
   const [isLikersOpen, showLikers, hideLikers] = useModal();
 
+  // If selected, scroll to this post
+  const maybeScrollTo = useCallback(
+    (e: HTMLDivElement | null) => {
+      if (big && e != null && (e as any).scrollIntoViewIfNeeded) {
+        (e as any).scrollIntoViewIfNeeded();
+      }
+    },
+    [big]
+  );
+
   return (
     <>
       {isOpen && (
@@ -89,6 +99,7 @@ export function PostBox({
           "cursor-pointer": shouldLink,
           "hover:bg-white-hov": shouldLink,
         })}
+        ref={maybeScrollTo}
       >
         {/** Left: user icon, reply lines */}
         <div className="flex flex-col">
