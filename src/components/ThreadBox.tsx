@@ -86,7 +86,7 @@ function ExpandButton({
 
 function BorderTop() {
   return (
-    <div className="flex px-2 py-1">
+    <div className="flex p-2">
       <div className="border-b border-midnight-1 flex-grow" />
     </div>
   );
