@@ -178,18 +178,38 @@ function PostHeader({
 
 function PostContent({ content, big }: { content: string; big?: boolean }) {
   // Parse out URLs, turn them into links
-  const regexURL = /https?:\/\/\S+/g;
-  const parts = content.split(regexURL);
-  const matches = content.match(regexURL);
+  const regexURL =
+    /https?:\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/;
+  const regexUser = /#\d+/;
+  const regexEth = /[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.eth/;
+  const regexCombined = new RegExp(
+    [regexURL, regexUser, regexEth].map((r) => r.source).join("|"),
+    "g"
+  );
+  const parts = content.split(regexCombined);
+  const matches = content.match(regexCombined);
 
   const contentElems = parts.map((part, i) => {
-    let link = matches != null && matches[i] != null && matches[i];
+    let match = matches != null && matches[i];
+
+    /** Turn special strings into links */
+    const linkURL: string | null = (function () {
+      if (!match) return null;
+      else if (regexURL.test(match)) return match;
+      else if (regexUser.test(match)) return `/user/${match.slice(1)}`;
+      else if (regexEth.test(match)) return `https://${match}.limo`;
+      else throw new Error("unreachable");
+    })();
+
+    /** Open external links in a new tab */
+    const target = linkURL && linkURL.startsWith("/") ? undefined : "_blank";
+
     return (
       <span key={i}>
         {part}
-        {link && (
-          <a href={link} rel="noreferrer" target="_blank">
-            {link}
+        {linkURL && (
+          <a href={linkURL} rel="noreferrer" {...{ target }}>
+            {match}
           </a>
         )}
       </span>
