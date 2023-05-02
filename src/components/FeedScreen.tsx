@@ -14,6 +14,9 @@ import { H2 } from "./typography";
 import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
 import { SelfContext } from "@/client/self";
 import { THEME_COLORS } from "@/common/constants";
+import Link from "next/link";
+
+import logoImage from "../../public/logo-160.png";
 
 type FeedType =
   | { type: "home" }
@@ -94,11 +97,16 @@ function FeedHeader({
   if (!self) throw new Error("unreachable");
 
   const { uid } = self.user;
+  const isViewingHome = feed.type === "home";
   const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
   const router = useRouter();
   const goToSelf = useCallback(
     () => router.push(`/user/${uid}`),
     [router, uid]
+  );
+
+  const logo = (
+    <Image priority src={logoImage} width={40} height={40} alt="Logo" />
   );
 
   return (
@@ -111,7 +119,12 @@ function FeedHeader({
           {feed.type === "profile" && `#${feed.profileUser.uid}`}
         </div>
       </H2>
-      <Image priority src="/logo-160.png" width={40} height={40} alt="Logo" />
+      {isViewingHome && <div className="opacity-90">{logo}</div>}
+      {!isViewingHome && (
+        <Link href="/" className="hover:opacity-90">
+          {logo}
+        </Link>
+      )}
       <div className="w-32 flex justify-end items-center gap-2">
         <ButtonSquare onClick={goToSelf} disabled={isViewingSelf}>
           {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
