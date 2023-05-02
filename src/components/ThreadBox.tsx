@@ -1,6 +1,6 @@
 import { Post, Thread, User } from "@/common/model";
 import { uniq } from "@/common/util";
-import { useCallback, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import { ButtonSmall } from "./Button";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
@@ -22,33 +22,41 @@ export function ThreadBox({
   const expand = useCallback(() => setExpanded(true), []);
   const { posts } = thread;
 
+  let postElems: ReactNode[];
+  if (expanded) {
+    postElems = posts.map((post: Post, index: number) => {
+      const connUp = index > 0 && post.parentID === posts[index - 1].id;
+      const connDown =
+        index < posts.length - 1 && post.id === posts[index + 1].parentID;
+      const big = post.id === selectedPostID;
+      return (
+        <PostBox key={post.id} post={post} {...{ connUp, connDown, big }} />
+      );
+    });
+  } else {
+    postElems = [
+      <PostBox key={posts[0].id} post={posts[0]} connDown />,
+      <ExpandButton
+        key="expander"
+        onClick={expand}
+        numPosts={posts.length - 2}
+        users={uniq(
+          posts.slice(1, posts.length - 1).map((p) => p.user),
+          (p) => p.uid
+        )}
+      />,
+      <PostBox
+        key={posts[posts.length - 1].id}
+        post={posts[posts.length - 1]}
+        connUp
+      />,
+    ];
+  }
+
   return (
     <>
       {borderTop && <BorderTop />}
-      {expanded &&
-        posts.map((post: Post, index: number) => {
-          const connUp = index > 0 && post.parentID === posts[index - 1].id;
-          const connDown =
-            index < posts.length - 1 && post.id === posts[index + 1].parentID;
-          const big = post.id === selectedPostID;
-          return (
-            <PostBox key={post.id} post={post} {...{ connUp, connDown, big }} />
-          );
-        })}
-      {!expanded && (
-        <>
-          <PostBox post={posts[0]} connDown />
-          <ExpandButton
-            onClick={expand}
-            numPosts={posts.length - 2}
-            users={uniq(
-              posts.slice(1, posts.length - 1).map((p) => p.user),
-              (p) => p.uid
-            )}
-          />
-          <PostBox post={posts[posts.length - 1]} connUp />
-        </>
-      )}
+      {postElems}
     </>
   );
 }
