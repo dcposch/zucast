@@ -217,7 +217,11 @@ function PostContent({ content, big }: { content: string; big?: boolean }) {
   });
 
   return (
-    <div className={classNames("whitespace-pre-wrap", { "text-xl": big })}>
+    <div
+      className={classNames("whitespace-pre-wrap break-all", {
+        "text-xl": big,
+      })}
+    >
       {contentElems}
     </div>
   );
