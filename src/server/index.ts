@@ -20,16 +20,22 @@ class ZucastServer {
   async init() {
     await this.db.createTables();
 
+    // Load auth
     const authTokens = await this.db.loadAuthTokens();
     authTokens.forEach((t) => auth.addToken(t));
     auth.onTokenAdded.on((t) => this.db.saveAuthToken(t));
 
+    // Load feed
     const storedActions = await this.db.loadStoredActions();
     await feed.init(storedActions);
     feed.onStoredAction.on(({ id, action }) =>
       this.db.saveStoredAction(id, action)
     );
 
+    // Verify asynchronoously, in the background
+    feed.validate();
+
+    // Preload the latest root periodically, for fast login
     preloadLatestRoot();
     setInterval(preloadLatestRoot, 1000 * 60 * 5);
   }

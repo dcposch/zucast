@@ -62,8 +62,8 @@ export class ZucastFeed {
   /** Append-only feed of stored actions. Everything else is derived. */
   private storedActions: StoredAction[] = [];
 
-  /** False on server start, true once the action log has loaded & verified. */
-  private isInited = false;
+  /** Tracks when the action log has been loaded & verified. */
+  private state: "new" | "inited" | "validated" = "new";
   /** Event triggered after an action has been verified and executed. */
   onStoredAction = new TypedEvent<{ id: number; action: StoredAction }>();
 
@@ -76,6 +76,8 @@ export class ZucastFeed {
 
   /** Initializes the feed from a list of stored actions */
   async init(actions: StoredAction[]) {
+    if (this.state !== "new") throw new Error("Feed already initialized");
+
     console.log(`[FEED] initializing feed from ${actions.length} actions`);
     const elapsedS = await time(async () => {
       for (const action of actions) {
@@ -83,12 +85,24 @@ export class ZucastFeed {
       }
     });
     this.storedActions = actions;
-    this.isInited = true;
+    this.state = "inited";
     console.log(`[FEED] initialized feed in ${elapsedS.toFixed(1)}s`);
+  }
+
+  /** Summarizes feed status */
+  getStatus() {
+    return {
+      state: this.state,
+      nActions: this.storedActions.length,
+      nUsers: this.feedUsers.length,
+      nPosts: this.feedPosts.length,
+    };
   }
 
   /** Validates each action in the fee */
   async validate() {
+    if (this.state === "new") throw new Error("Feed uninitialized");
+
     console.log(`[FEED] validating ${this.storedActions.length} actions`);
     const elapsedS = await time(async () => {
       for (const action of this.storedActions) {
@@ -96,6 +110,7 @@ export class ZucastFeed {
       }
     });
     console.log(`[FEED] validated feed in ${elapsedS.toFixed(1)}s`);
+    this.state = "validated";
   }
 
   /** Generates a feed of recent posts, newest to oldest. */
@@ -203,7 +218,7 @@ export class ZucastFeed {
    * This is the ONLY public function that modifies the feed.
    */
   async append(sa: StoredAction): Promise<User> {
-    if (!this.isInited) {
+    if (this.state === "new") {
       throw new Error("Feed initializing, try again soon");
     }
     await this.verify(sa);
