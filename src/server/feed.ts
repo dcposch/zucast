@@ -119,18 +119,18 @@ export class ZucastFeed {
     const threadIDs = new Set<number>();
     const ret = this.feedPosts
       .slice(-300)
+      .reverse()
       .filter((p) => {
         const alreadyIncluded = threadIDs.has(p.rootID);
         threadIDs.add(p.rootID);
         return !alreadyIncluded;
       })
-      .slice(-100)
+      .slice(0, 100)
       .map((p) => this.feedPosts[p.rootID])
       .map<Thread>((p) => ({
         rootID: p.id,
         posts: p.replies.map((p) => this.toPost(authUID, p)),
-      }))
-      .reverse();
+      }));
     console.log(`[FEED] generated global feed, ${ret.length} threads`);
     return ret;
   }
