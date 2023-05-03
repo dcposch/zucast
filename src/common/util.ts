@@ -8,3 +8,10 @@ export function uniq<T, I>(arr: T[], id: (t: T) => I): T[] {
     return true;
   });
 }
+
+/** Returns elapsed time in seconds */
+export async function time(fn: () => Promise<void>): Promise<number> {
+  const start = performance.now();
+  await fn();
+  return (performance.now() - start) / 1000;
+}
