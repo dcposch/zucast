@@ -1,8 +1,4 @@
-import {
-  StoredAction,
-  StoredActionAct,
-  StoredActionAddKey,
-} from "@/common/model";
+import { Transaction, TransactionAct, TransactionAddKey } from "@/common/model";
 import { ZucastFeed } from "@/server/feed";
 
 describe("Feed", () => {
@@ -26,14 +22,14 @@ describe("Feed", () => {
   });
 });
 
-async function newFeed(log: StoredAction[]): Promise<ZucastFeed> {
+async function newFeed(log: Transaction[]): Promise<ZucastFeed> {
   const feed = new ZucastFeed();
   await feed.init(log);
   await feed.validate();
   return feed;
 }
 
-function sampleAddKey(): StoredActionAddKey {
+function sampleAddKey(): TransactionAddKey {
   return {
     pcd: '{"type":"semaphore-group-signal","pcd":"{\\"type\\":\\"semaphore-group-signal\\",\\"id\\":\\"2042b952-1e34-4977-8b89-e5092bdd05fe\\",\\"claim\\":{\\"merkleRoot\\":\\"11809297090928808463097287771132557972288841476757973860739152448990920609708\\",\\"depth\\":16,\\"externalNullifier\\":\\"420\\",\\"nullifierHash\\":\\"8941435910672510420697618269036565481324260141702727864298936337425298748986\\",\\"signal\\":\\"14548653408222800303858900355054671409106678829497654880071378725207626657\\"},\\"proof\\":[\\"826717737534256012341570302020782686866083789126649050333306353919980422581\\",\\"3675541684873156954011187967049143549963763356421363157017788506627466570842\\",\\"4313032861368704779875631178615229907391707058330362936978631004154658030473\\",\\"5835133709242793862661903147860717251021423819729469116320278834086052224638\\",\\"19379615364760906383710091680029474619079275042186969824434769007631240385974\\",\\"15247908374800881903868539904491819977981876402727695576390674329139580786774\\",\\"5742215948151086397249001774984240724474386467481955079341125228679416864670\\",\\"12242863582104525287847797376042768665022556475419514987246233104845280142300\\"]}"}',
     type: "addKey",
@@ -43,7 +39,7 @@ function sampleAddKey(): StoredActionAddKey {
   };
 }
 
-function samplePost(): StoredActionAct {
+function samplePost(): TransactionAct {
   return {
     uid: 0,
     type: "act",

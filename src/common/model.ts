@@ -72,9 +72,9 @@ export const actionModel = z.union([
 
 export type Action = z.infer<typeof actionModel>;
 
-export type StoredAction = StoredActionAct | StoredActionAddKey;
+export type Transaction = TransactionAct | TransactionAddKey;
 
-export type StoredActionAct = {
+export type TransactionAct = {
   timeMs: number;
   type: "act";
   uid: number;
@@ -83,7 +83,7 @@ export type StoredActionAct = {
   actionJSON: string;
 };
 
-export type StoredActionAddKey = {
+export type TransactionAddKey = {
   timeMs: number;
   type: "addKey";
   pcd: string;

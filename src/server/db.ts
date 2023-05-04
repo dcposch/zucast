@@ -1,6 +1,6 @@
 import { Client, ClientConfig, Pool } from "pg";
 import { AuthToken } from "./auth";
-import { StoredAction } from "@/common/model";
+import { Transaction } from "@/common/model";
 import { PoolConfig } from "pg";
 
 /** Credentials automatically come from env.PGUSER etc, or from PGURL. */
@@ -23,9 +23,9 @@ interface AuthTokenRow {
   token: AuthToken;
 }
 
-interface StoredActionRow {
+interface TransactionRow {
   id: number;
-  action: StoredAction;
+  tx: Transaction;
 }
 
 export class DB {
@@ -48,9 +48,9 @@ export class DB {
           );
       `);
     await client.query(`
-          CREATE TABLE IF NOT EXISTS storedAction (
+          CREATE TABLE IF NOT EXISTS tx (
               id INTEGER PRIMARY KEY,
-              action JSONB NOT NULL
+              tx JSONB NOT NULL
           );
       `);
     await client.end();
@@ -73,18 +73,16 @@ export class DB {
     client.release();
   }
 
-  async loadStoredActions(): Promise<StoredAction[]> {
+  async loadTransactions(): Promise<Transaction[]> {
     console.log(`[DB] loading stored action log`);
     const client = await this.pool.connect();
-    const result = await client.query<StoredActionRow>(
-      "SELECT * FROM storedAction"
-    );
+    const result = await client.query<TransactionRow>("SELECT * FROM tx");
     client.release();
 
     // Keep a contiguous log, ensuring DB ID = array index
-    const ret: StoredAction[] = [];
+    const ret: Transaction[] = [];
     for (const row of result.rows) {
-      ret[row.id] = row.action;
+      ret[row.id] = row.tx;
     }
     let numActions;
     for (numActions = 0; numActions < ret.length; numActions++) {
@@ -96,13 +94,13 @@ export class DB {
     return ret;
   }
 
-  async saveStoredAction(id: number, action: StoredAction) {
-    console.log(`[DB] saving stored action ${id}: ${action.type}`);
+  async saveTransaction(id: number, tx: Transaction) {
+    console.log(`[DB] saving stored action ${id}: ${tx.type}`);
     const client = await this.pool.connect();
     await client.query(
-      `INSERT INTO storedAction (id, action) VALUES ($1, $2)
-          ON CONFLICT (id) DO UPDATE SET action = $2`,
-      [id, action]
+      `INSERT INTO tx (id, tx) VALUES ($1, $2)
+          ON CONFLICT (id) DO UPDATE SET tx = $2`,
+      [id, tx]
     );
     client.release();
   }

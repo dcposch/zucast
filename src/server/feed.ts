@@ -14,9 +14,9 @@ import {
 import {
   Action,
   Post,
-  StoredAction,
-  StoredActionAct,
-  StoredActionAddKey,
+  Transaction,
+  TransactionAct,
+  TransactionAddKey,
   Thread,
   User,
   actionModel,
@@ -30,7 +30,7 @@ export interface FeedUser extends User {
   /** Posts by this user */
   posts: FeedPost[];
   /** Recent actions, for rate limiting and ranking. */
-  recentActions: StoredAction[];
+  recentTransactions: Transaction[];
   /** Posts liked by this user */
   likedPosts: FeedPost[];
 }
@@ -60,12 +60,12 @@ interface FeedPost {
 /** Stores the public global feed. */
 export class ZucastFeed {
   /** Append-only feed of stored actions. Everything else is derived. */
-  private storedActions: StoredAction[] = [];
+  private transactions: Transaction[] = [];
 
   /** Tracks when the action log has been loaded & verified. */
   private state: "new" | "inited" | "validated" = "new";
   /** Event triggered after an action has been verified and executed. */
-  onStoredAction = new TypedEvent<{ id: number; action: StoredAction }>();
+  onTransaction = new TypedEvent<{ id: number; tx: Transaction }>();
 
   /** Anonymous users */
   private feedUsers: FeedUser[] = [];
@@ -75,16 +75,16 @@ export class ZucastFeed {
   private feedPosts: FeedPost[] = [];
 
   /** Initializes the feed from a list of stored actions */
-  async init(actions: StoredAction[]) {
+  async init(transactions: Transaction[]) {
     if (this.state !== "new") throw new Error("Feed already initialized");
 
-    console.log(`[FEED] initializing feed from ${actions.length} actions`);
+    console.log(`[FEED] initializing feed from ${transactions.length} actions`);
     const elapsedS = await time(async () => {
-      for (const action of actions) {
+      for (const action of transactions) {
         await this.exec(action);
       }
     });
-    this.storedActions = actions;
+    this.transactions = transactions;
     this.state = "inited";
     console.log(`[FEED] initialized feed in ${elapsedS.toFixed(1)}s`);
   }
@@ -93,7 +93,7 @@ export class ZucastFeed {
   getStatus() {
     return {
       state: this.state,
-      nActions: this.storedActions.length,
+      nActions: this.transactions.length,
       nUsers: this.feedUsers.length,
       nPosts: this.feedPosts.length,
     };
@@ -103,14 +103,19 @@ export class ZucastFeed {
   async validate() {
     if (this.state === "new") throw new Error("Feed uninitialized");
 
-    console.log(`[FEED] validating ${this.storedActions.length} actions`);
+    console.log(`[FEED] validating ${this.transactions.length} actions`);
     const elapsedS = await time(async () => {
-      for (const action of this.storedActions) {
+      for (const action of this.transactions) {
         await this.verify(action);
       }
     });
     console.log(`[FEED] validated feed in ${elapsedS.toFixed(1)}s`);
     this.state = "validated";
+  }
+
+  /** Serves the raw append-only action log. */
+  loadLog(sinceID: number): Transaction[] {
+    return this.transactions.slice(sinceID);
   }
 
   /** Generates a feed of recent posts, newest to oldest. */
@@ -217,17 +222,17 @@ export class ZucastFeed {
    * Performs an action after validation, including verifying its signature.
    * This is the ONLY public function that modifies the feed.
    */
-  async append(sa: StoredAction): Promise<User> {
+  async append(tx: Transaction): Promise<User> {
     if (this.state === "new") {
       throw new Error("Feed initializing, try again soon");
     }
-    await this.verify(sa);
-    const user = await this.exec(sa);
+    await this.verify(tx);
+    const user = await this.exec(tx);
 
     // Log action, emit event
-    const id = this.storedActions.length;
-    this.storedActions.push(sa);
-    this.onStoredAction.emit({ id, action: sa });
+    const id = this.transactions.length;
+    this.transactions.push(tx);
+    this.onTransaction.emit({ id, tx });
 
     return user;
   }
@@ -236,27 +241,27 @@ export class ZucastFeed {
    * Verifies the cryptographic signature or proof for an action.
    * This has NO effect on the feed--see exec() for that.
    */
-  private async verify(sa: StoredAction) {
-    const { type } = sa;
+  private async verify(tx: Transaction) {
+    const { type } = tx;
     switch (type) {
       case "addKey":
-        return await this.verifyAddKey(sa);
+        return await this.verifyAddKey(tx);
       case "act":
-        return await this.verifyAct(sa);
+        return await this.verifyAct(tx);
       default:
         throw new Error(`Invalid stored action type ${type}`);
     }
   }
 
   /** Executes an already-verified action. */
-  private async exec(sa: StoredAction): Promise<User> {
-    const { type } = sa;
+  private async exec(tx: Transaction): Promise<User> {
+    const { type } = tx;
     const feedUser = await (() => {
       switch (type) {
         case "addKey":
-          return this.execAddKey(sa);
+          return this.execAddKey(tx);
         case "act":
-          return this.execAct(sa);
+          return this.execAct(tx);
         default:
           throw new Error(`Invalid stored action type ${type}`);
       }
@@ -269,9 +274,9 @@ export class ZucastFeed {
    * Verifies a zero-knowledge proof PCD, then checks that the proof references
    * a valid merkle root.
    */
-  private async verifyAddKey(sa: StoredActionAddKey) {
+  private async verifyAddKey(tx: TransactionAddKey) {
     // Parse and verify the PCD
-    const serPCD = JSON.parse(sa.pcd) as SerializedPCD;
+    const serPCD = JSON.parse(tx.pcd) as SerializedPCD;
 
     console.log(`[FEED] addKey verifying ${serPCD.type}`);
     console.log(serPCD.pcd);
@@ -283,7 +288,7 @@ export class ZucastFeed {
       throw new Error(`Invalid PCD, ignoring addKey`);
     } else if (pcd.claim.externalNullifier !== "" + EXTERNAL_NULLIFIER) {
       throw new Error(`Wrong externalNullifier, ignoring addKey`);
-    } else if (pcd.claim.signal !== "" + generateMessageHash(sa.pubKeyHex)) {
+    } else if (pcd.claim.signal !== "" + generateMessageHash(tx.pubKeyHex)) {
       throw new Error(`Wrong signal, ignoring addKey`);
     } else if (!(await isValidZuzaluMerkleRoot(pcd.claim.merkleRoot))) {
       throw new Error(`Invalid Zuzalu merkle root, ignoring addKey`);
@@ -294,14 +299,14 @@ export class ZucastFeed {
    * Adds a signing pubkey to the anonymous user (identified  by nullifierHash).'
    * Creates a new user if necessary.
    */
-  private async execAddKey(sa: StoredActionAddKey) {
+  private async execAddKey(tx: TransactionAddKey) {
     // Load previously-verified PCD
-    const serPCD = JSON.parse(sa.pcd) as SerializedPCD;
+    const serPCD = JSON.parse(tx.pcd) as SerializedPCD;
     const pcd = await SemaphoreGroupPCDPackage.deserialize(serPCD.pcd);
 
     // Disallow duplicate keys
-    if (this.feedUsersByPubKeyHex.has(sa.pubKeyHex)) {
-      throw new Error(`Pubkey already exists, ignoring addKey ${sa.pubKeyHex}`);
+    if (this.feedUsersByPubKeyHex.has(tx.pubKeyHex)) {
+      throw new Error(`Pubkey already exists, ignoring addKey ${tx.pubKeyHex}`);
     }
 
     // Create a new user if necessary
@@ -311,8 +316,8 @@ export class ZucastFeed {
     }
 
     // Either way, add a pubKey to the user
-    feedUser.pubKeys.push(sa.pubKeyHex);
-    this.feedUsersByPubKeyHex.set(sa.pubKeyHex, feedUser);
+    feedUser.pubKeys.push(tx.pubKeyHex);
+    this.feedUsersByPubKeyHex.set(tx.pubKeyHex, feedUser);
 
     return feedUser;
   }
@@ -327,7 +332,7 @@ export class ZucastFeed {
       profile: { color: PROFILE_COLORS[2], emoji: "🥚" },
       pubKeys: [],
       posts: [],
-      recentActions: [],
+      recentTransactions: [],
       likedPosts: [],
     };
     this.feedUsers.push(ret);
@@ -336,27 +341,27 @@ export class ZucastFeed {
   }
 
   /** Verifies a signing-key signature, then records the (post, like, etc) */
-  private async verifyAct(sa: StoredActionAct) {
-    const feedUser = this.feedUsers[sa.uid];
+  private async verifyAct(tx: TransactionAct) {
+    const feedUser = this.feedUsers[tx.uid];
     if (!feedUser) {
       throw new Error("Ignoring action, uid not found");
     }
 
     // Verify
-    if (!feedUser.pubKeys.includes(sa.pubKeyHex)) {
+    if (!feedUser.pubKeys.includes(tx.pubKeyHex)) {
       throw new Error("Ignoring action, signing pubKey not found");
     }
-    await verifySignature(sa.pubKeyHex, sa.signature, sa.actionJSON);
+    await verifySignature(tx.pubKeyHex, tx.signature, tx.actionJSON);
   }
 
   /** Executes an already-verified user action. */
-  private async execAct(sa: StoredActionAct) {
-    const feedUser = this.feedUsers[sa.uid];
+  private async execAct(tx: TransactionAct) {
+    const feedUser = this.feedUsers[tx.uid];
 
     // Record user action
-    const recents = feedUser.recentActions;
-    recents.unshift(sa);
-    const t1HBefore = sa.timeMs - 60 * 60 * 1000;
+    const recents = feedUser.recentTransactions;
+    recents.unshift(tx);
+    const t1HBefore = tx.timeMs - 60 * 60 * 1000;
     while (recents.length && recents[recents.length - 1].timeMs < t1HBefore) {
       recents.pop();
     }
@@ -365,8 +370,8 @@ export class ZucastFeed {
     }
 
     // Try to execute the action
-    const action = actionModel.parse(JSON.parse(sa.actionJSON));
-    this.execUserAction(feedUser, action, sa.timeMs);
+    const action = actionModel.parse(JSON.parse(tx.actionJSON));
+    this.execUserAction(feedUser, action, tx.timeMs);
 
     return feedUser;
   }

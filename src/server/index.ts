@@ -26,11 +26,9 @@ class ZucastServer {
     auth.onTokenAdded.on((t) => this.db.saveAuthToken(t));
 
     // Load feed
-    const storedActions = await this.db.loadStoredActions();
-    await feed.init(storedActions);
-    feed.onStoredAction.on(({ id, action }) =>
-      this.db.saveStoredAction(id, action)
-    );
+    const transactions = await this.db.loadTransactions();
+    await feed.init(transactions);
+    feed.onTransaction.on(({ id, tx }) => this.db.saveTransaction(id, tx));
 
     // Verify asynchronoously, in the background
     feed.validate();
