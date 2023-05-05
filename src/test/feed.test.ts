@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { test } from "node:test";
 import { testSetValid } from "../common/crypto";
 import {
   Transaction,
@@ -8,27 +7,30 @@ import {
 } from "../common/model";
 import { ZucastFeed } from "../server/feed";
 
-test("loads the transaction log", {}, async (t) => {
-  const feed = await initOnly([sampleAddKey(), samplePost()]);
+describe("Feed", function () {
+  this.timeout("5s");
 
-  const threads = feed.loadGlobalFeed(0);
-  assert.equal(threads.length, 1);
-  assert.equal(threads[0].posts[0].content, "testing 123");
-});
+  it("loads the transaction log", async () => {
+    const feed = await initOnly([sampleAddKey(), samplePost()]);
 
-test("validates on append", async () => {
-  const empty = await validate([]);
-  await expectErr(
-    () => empty.append(samplePost()),
-    "Ignoring action, uid not found"
-  );
+    const threads = feed.loadGlobalFeed(0);
+    assert.equal(threads.length, 1);
+    assert.equal(threads[0].posts[0].content, "testing 123");
+  });
 
-  // TODO: loading the Semaphore...PCD machinery causes test to hang, timeout.
-  // await empty.append(sampleAddKey());
+  it("validates on append", async () => {
+    const empty = await validate([]);
+    await expectErr(
+      () => empty.append(samplePost()),
+      "Ignoring action, uid not found"
+    );
 
-  // const badPCD = sampleAddKey();
-  // badPCD.pubKeyHex = "foo";
-  // await expectErr(() => newFeed([badPCD]), "Wrong signal, ignoring addKey");
+    await empty.append(sampleAddKey());
+
+    const badPCD = sampleAddKey();
+    badPCD.pubKeyHex = "foo";
+    await expectErr(() => validate([badPCD]), "Wrong signal, ignoring addKey");
+  });
 });
 
 async function expectErr(fn: () => Promise<unknown>, message: string) {
