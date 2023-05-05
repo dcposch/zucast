@@ -1,4 +1,4 @@
-import { trpc } from "@/client/trpc";
+import { trpc } from "../client/trpc";
 import { LinkSmall } from "./Button";
 import { UserIcon } from "./UserIcon";
 

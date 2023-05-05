@@ -1,5 +1,5 @@
-import { sign } from "@/common/crypto";
-import { Action } from "@/common/model";
+import { sign } from "../common/crypto";
+import { Action } from "../common/model";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { SelfContext } from "./self";
 import { trpc } from "./trpc";

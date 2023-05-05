@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --report-unused-disable-directives src",
-    "test": "tsc --noEmit",
+    "test": "tsc --noEmit && node --require ts-node/register --test src/test/*.ts",
     "start": "next start"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "eslint": "^8.30.0",
     "eslint-config-next": "^13.3.1",
     "ts-node": "^10.9.1",
+    "ts-node-test": "^0.4.1",
     "typescript": "^4.8.3"
   }
 }

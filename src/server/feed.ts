@@ -2,9 +2,9 @@ import {
   EXTERNAL_NULLIFIER,
   PROFILE_COLORS,
   RATE_LIMIT_ACTIONS_PER_HOUR,
-} from "@/common/constants";
-import { isValidZuzaluMerkleRoot, verifySignature } from "@/common/crypto";
-import { validatePost, validateProfile } from "@/common/validation";
+} from "../common/constants";
+import { isValidZuzaluMerkleRoot, verifySignature } from "../common/crypto";
+import { validatePost, validateProfile } from "../common/validation";
 import { SerializedPCD } from "@pcd/pcd-types";
 import {
   SemaphoreGroupPCD,
@@ -20,9 +20,9 @@ import {
   Thread,
   User,
   actionModel,
-} from "@/common/model";
+} from "../common/model";
 import { TypedEvent } from "./event";
-import { time } from "@/common/util";
+import { time } from "../common/util";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */

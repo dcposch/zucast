@@ -1,4 +1,4 @@
-import { useEscape } from "@/client/hooks";
+import { useEscape } from "../client/hooks";
 import { ButtonSquare } from "./Button";
 import { Container } from "./Container";
 import { H2 } from "./typography";

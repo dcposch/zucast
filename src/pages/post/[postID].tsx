@@ -1,8 +1,8 @@
-import { SelfContext } from "@/client/self";
-import { useSigningKey } from "@/common/crypto";
-import { Thread, User } from "@/common/model";
-import { FeedScreen } from "@/components/FeedScreen";
-import { server, feed } from "@/server";
+import { SelfContext } from "../../client/self";
+import { useSigningKey } from "../../common/crypto";
+import { Thread, User } from "../../common/model";
+import { FeedScreen } from "../../components/FeedScreen";
+import { server, feed } from "../../server";
 import { GetServerSideProps, Redirect } from "next";
 
 interface PostPageProps {

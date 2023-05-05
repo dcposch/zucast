@@ -1,5 +1,5 @@
-import { SelfContext } from "@/client/self";
-import { User } from "@/common/model";
+import { SelfContext } from "../client/self";
+import { User } from "../common/model";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useState } from "react";

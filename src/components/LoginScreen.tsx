@@ -1,6 +1,6 @@
-import { trpc } from "@/client/trpc";
-import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
-import { KeyPair } from "@/common/crypto";
+import { trpc } from "../client/trpc";
+import { COOKIE_ZUCAST_TOKEN } from "../common/constants";
+import { KeyPair } from "../common/crypto";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useZupass } from "zukit";

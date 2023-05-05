@@ -1,5 +1,5 @@
 import Link, { LinkProps } from "next/link";
-import { CSSProperties, ReactNode, StyleHTMLAttributes } from "react";
+import { CSSProperties, ReactNode } from "react";
 
 export function Button(props: JSX.IntrinsicElements["button"]) {
   return (

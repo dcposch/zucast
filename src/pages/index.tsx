@@ -1,10 +1,10 @@
-import { SelfContext } from "@/client/self";
-import { EXTERNAL_NULLIFIER } from "@/common/constants";
-import { useSigningKey } from "@/common/crypto";
-import { Thread, User } from "@/common/model";
-import { FeedScreen } from "@/components/FeedScreen";
-import { LoginScreen, logoutAndReload } from "@/components/LoginScreen";
-import { feed, server } from "@/server";
+import { SelfContext } from "../client/self";
+import { EXTERNAL_NULLIFIER } from "../common/constants";
+import { useSigningKey } from "../common/crypto";
+import { Thread, User } from "../common/model";
+import { FeedScreen } from "../components/FeedScreen";
+import { LoginScreen, logoutAndReload } from "../components/LoginScreen";
+import { feed, server } from "../server";
 import { GetServerSideProps } from "next";
 import { useEffect } from "react";
 import { useZupass } from "zukit";

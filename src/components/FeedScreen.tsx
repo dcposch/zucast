@@ -1,5 +1,5 @@
-import { useEscape } from "@/client/hooks";
-import { Thread, User } from "@/common/model";
+import { useEscape } from "../client/hooks";
+import { Thread, User } from "../common/model";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -12,8 +12,8 @@ import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
 import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
-import { SelfContext } from "@/client/self";
-import { THEME_COLORS } from "@/common/constants";
+import { SelfContext } from "../client/self";
+import { THEME_COLORS } from "../common/constants";
 import Link from "next/link";
 
 import logoImage from "../../public/logo-160.png";

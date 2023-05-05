@@ -1,10 +1,10 @@
-import { COOKIE_ZUCAST_TOKEN } from "@/common/constants";
-import { User } from "@/common/model";
+import { COOKIE_ZUCAST_TOKEN } from "../common/constants";
+import { User } from "../common/model";
 import { GetServerSidePropsContext } from "next";
 import { ZucastAuth } from "./auth";
 import { DB } from "./db";
 import { ZucastFeed } from "./feed";
-import { preloadLatestRoot } from "@/common/crypto";
+import { preloadLatestRoot } from "../common/crypto";
 
 interface InitStatus {
   elapsedMs: number;

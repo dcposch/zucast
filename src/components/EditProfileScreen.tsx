@@ -1,7 +1,7 @@
-import { useSendAction } from "@/client/hooks";
-import { SelfContext } from "@/client/self";
-import { PROFILE_COLORS } from "@/common/constants";
-import { validateEmoji } from "@/common/validation";
+import { useSendAction } from "../client/hooks";
+import { SelfContext } from "../client/self";
+import { PROFILE_COLORS } from "../common/constants";
+import { validateEmoji } from "../common/validation";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Button, ButtonSmall } from "./Button";
 import { UserIconProfile } from "./UserIcon";

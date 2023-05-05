@@ -1,5 +1,5 @@
-import { Post, Thread, User } from "@/common/model";
-import { uniq } from "@/common/util";
+import { Post, Thread, User } from "../common/model";
+import { uniq } from "../common/util";
 import { ReactNode, useCallback, useState } from "react";
 import { ButtonSmall } from "./Button";
 import { PostBox } from "./PostBox";

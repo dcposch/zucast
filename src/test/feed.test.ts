@@ -1,26 +1,42 @@
-import { Transaction, TransactionAct, TransactionAddKey } from "@/common/model";
-import { ZucastFeed } from "@/server/feed";
+import {
+  Transaction,
+  TransactionAct,
+  TransactionAddKey,
+} from "../common/model";
+import { ZucastFeed } from "../server/feed";
+import { describe, it } from "node:test";
+import assert from "node:assert";
 
 describe("Feed", () => {
-  it("validates after init", async () => {
+  it("validates after init", {}, async (t) => {
     await newFeed([sampleAddKey()]);
     await newFeed([sampleAddKey(), samplePost()]);
 
     const badPCD = sampleAddKey();
     badPCD.pubKeyHex = "foo";
-    await expect(newFeed([badPCD])).rejects.toThrow(
-      "Wrong signal, ignoring addKey"
-    );
-  }, 20_000);
+    await expectErr(() => newFeed([badPCD]), "Wrong signal, ignoring addKey");
+  });
 
   it("validates on append", async () => {
     const empty = await newFeed([]);
-    await expect(empty.append(samplePost())).rejects.toThrow(
+
+    await expectErr(
+      () => empty.append(samplePost()),
       "Ignoring action, uid not found"
     );
+
     await empty.append(sampleAddKey());
   });
 });
+
+async function expectErr(fn: () => Promise<unknown>, message: string) {
+  try {
+    await fn();
+    assert.fail();
+  } catch (e: any) {
+    assert.equal(e.message, message);
+  }
+}
 
 async function newFeed(log: Transaction[]): Promise<ZucastFeed> {
   const feed = new ZucastFeed();

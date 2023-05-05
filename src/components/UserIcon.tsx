@@ -1,4 +1,4 @@
-import { User, UserProfile } from "@/common/model";
+import { User, UserProfile } from "../common/model";
 import classNames from "classnames";
 import { useMemo } from "react";
 

@@ -1,7 +1,7 @@
-import { useSendAction } from "@/client/hooks";
-import { SelfContext } from "@/client/self";
-import { MAX_POST_LENGTH } from "@/common/constants";
-import { Action, Post } from "@/common/model";
+import { useSendAction } from "../client/hooks";
+import { SelfContext } from "../client/self";
+import { MAX_POST_LENGTH } from "../common/constants";
+import { Action, Post } from "../common/model";
 import { useRouter } from "next/router";
 import {
   ChangeEvent,

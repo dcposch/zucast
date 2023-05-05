@@ -1,6 +1,6 @@
 import { Client, ClientConfig, Pool } from "pg";
 import { AuthToken } from "./auth";
-import { Transaction } from "@/common/model";
+import { Transaction } from "../common/model";
 import { PoolConfig } from "pg";
 
 /** Credentials automatically come from env.PGUSER etc, or from PGURL. */

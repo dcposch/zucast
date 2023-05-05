@@ -1,5 +1,5 @@
-import { KeyPair } from "@/common/crypto";
-import { User } from "@/common/model";
+import { KeyPair } from "../common/crypto";
+import { User } from "../common/model";
 import { createContext } from "react";
 
 export interface Self {

@@ -1,5 +1,5 @@
-import { useModal, useSendAction } from "@/client/hooks";
-import { Post } from "@/common/model";
+import { useModal, useSendAction } from "../client/hooks";
+import { Post } from "../common/model";
 import { CommentIcon, HeartFillIcon, HeartIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import Link from "next/link";
