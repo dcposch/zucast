@@ -13,10 +13,8 @@ import { UserDetails } from "./UserDetails";
 import { H2 } from "./typography";
 import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
 import { SelfContext } from "../client/self";
-import { THEME_COLORS } from "../common/constants";
+import { LOGO_160, THEME_COLORS } from "../common/constants";
 import Link from "next/link";
-
-import logoImage from "../../public/logo-160.png";
 
 type FeedType =
   | { type: "home" }
@@ -106,7 +104,7 @@ function FeedHeader({
   );
 
   const logo = (
-    <Image priority src={logoImage} width={40} height={40} alt="Logo" />
+    <Image priority src={LOGO_160} width={40} height={40} alt="Logo" />
   );
 
   return (

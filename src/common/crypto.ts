@@ -125,6 +125,10 @@ export async function isValidZuzaluMerkleRoot(root: string) {
   return ret;
 }
 
+export function testSetValid(root: string) {
+  merkleRoots.set(root, Promise.resolve(true));
+}
+
 export async function preloadLatestRoot() {
   const url = "https://api.pcd-passport.com/semaphore/latest-root/1";
   console.log(`[CRYPTO] fetching latest merkle root ${url}`);
