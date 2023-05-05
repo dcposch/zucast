@@ -35,6 +35,15 @@ export class DB {
     this.pool = new Pool(poolConfig);
   }
 
+  getStatus() {
+    const { idleCount, totalCount, waitingCount } = this.pool;
+    return {
+      idleCount,
+      totalCount,
+      waitingCount,
+    };
+  }
+
   async createTables() {
     console.log(`[DB] connecting`);
     const client = new Client(dbConfig);

@@ -6,14 +6,20 @@ import { DB } from "./db";
 import { ZucastFeed } from "./feed";
 import { preloadLatestRoot } from "@/common/crypto";
 
+interface InitStatus {
+  elapsedMs: number;
+  error?: string;
+}
+
 class ZucastServer {
   db: DB;
   auth: ZucastAuth;
   feed: ZucastFeed;
 
-  private resolve = () => {};
+  private initStatus: { load?: InitStatus; validate?: InitStatus } = {};
+  private initResolve = () => {};
   private initPromise = new Promise<void>((res) => {
-    this.resolve = res;
+    this.initResolve = res;
   });
 
   constructor() {
@@ -22,15 +28,25 @@ class ZucastServer {
     this.feed = new ZucastFeed();
   }
 
-  init() {
-    return this.initInner().then(this.resolve);
-  }
-
   waitForInit() {
     return this.initPromise;
   }
 
-  private async initInner() {
+  async init() {
+    // Load append-only transaction log, init data structures.
+    this.initStatus.load = await status(() => this.load());
+
+    // Verify each tx asynchronoously, in the background
+    status(() => feed.validate()).then((s) => (this.initStatus.validate = s));
+
+    // Preload the latest merkle root periodically, for fast login
+    preloadLatestRoot();
+    setInterval(preloadLatestRoot, 1000 * 60 * 5);
+
+    this.initResolve();
+  }
+
+  private async load() {
     await this.db.createTables();
 
     // Load auth
@@ -42,13 +58,6 @@ class ZucastServer {
     const transactions = await this.db.loadTransactions();
     await feed.init(transactions);
     feed.onTransaction.on(({ id, tx }) => this.db.saveTransaction(id, tx));
-
-    // Verify asynchronoously, in the background
-    feed.validate();
-
-    // Preload the latest root periodically, for fast login
-    preloadLatestRoot();
-    setInterval(preloadLatestRoot, 1000 * 60 * 5);
   }
 
   /** Cookie authentication */
@@ -62,6 +71,32 @@ class ZucastServer {
     const { uid, nullifierHash, profile } = feed.loadUser(loggedInUid);
     const user: User = { uid, nullifierHash, profile };
     return user;
+  }
+
+  /** Status monitoring */
+  getStatus() {
+    return {
+      init: this.initStatus,
+      db: this.db.getStatus(),
+      auth: {
+        nTokens: this.auth.tokens.length,
+      },
+      feed: this.feed.getStatus(),
+    };
+  }
+}
+
+/** Tracks how long initialization takes, and whether there was an error.
+ * For any detail beyond this I'd add Honeycomb, if needed. */
+async function status(func: () => Promise<void>): Promise<InitStatus> {
+  const start = performance.now();
+  try {
+    await func();
+    return { elapsedMs: (performance.now() - start) | 0 };
+  } catch (e: any) {
+    console.error(`[SERVER] error during init`, e);
+    const error = e?.message || "Unknown error";
+    return { elapsedMs: (performance.now() - start) | 0, error };
   }
 }
 
