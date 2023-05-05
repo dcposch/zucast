@@ -36,7 +36,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (
   context
 ) => {
   // Authenticate
-  const user = server.authenticateRequest(context.req);
+  const user = await server.authenticateRequest(context.req);
   if (user == null) return { redirect: { destination: "/" } as Redirect };
 
   // Validate inputs

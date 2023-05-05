@@ -119,9 +119,9 @@ function FeedHeader({
           {feed.type === "profile" && `#${feed.profileUser.uid}`}
         </div>
       </H2>
-      {isViewingHome && <div className="opacity-90">{logo}</div>}
+      {isViewingHome && <div className="opacity-80">{logo}</div>}
       {!isViewingHome && (
-        <Link href="/" className="hover:opacity-90">
+        <Link href="/" className="hover:opacity-80 active:opacity-70">
           {logo}
         </Link>
       )}

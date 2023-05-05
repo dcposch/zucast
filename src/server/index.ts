@@ -11,13 +11,26 @@ class ZucastServer {
   auth: ZucastAuth;
   feed: ZucastFeed;
 
+  private resolve = () => {};
+  private initPromise = new Promise<void>((res) => {
+    this.resolve = res;
+  });
+
   constructor() {
     this.db = new DB();
     this.auth = new ZucastAuth();
     this.feed = new ZucastFeed();
   }
 
-  async init() {
+  init() {
+    return this.initInner().then(this.resolve);
+  }
+
+  waitForInit() {
+    return this.initPromise;
+  }
+
+  private async initInner() {
     await this.db.createTables();
 
     // Load auth
@@ -39,10 +52,13 @@ class ZucastServer {
   }
 
   /** Cookie authentication */
-  authenticateRequest(req: GetServerSidePropsContext["req"]): User | null {
+  async authenticateRequest(req: GetServerSidePropsContext["req"]) {
     const token = req.cookies[COOKIE_ZUCAST_TOKEN];
+    await this.waitForInit();
+
     const loggedInUid = auth.authenticate(token);
     if (loggedInUid == null) return null;
+
     const { uid, nullifierHash, profile } = feed.loadUser(loggedInUid);
     const user: User = { uid, nullifierHash, profile };
     return user;
