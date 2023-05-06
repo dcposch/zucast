@@ -93,7 +93,7 @@ export function PostBox({
 
       <div
         onClick={shouldLink ? goToPost : undefined}
-        className={classNames("flex gap-6 pr-2 rounded-lg", {
+        className={classNames("flex gap-6 pr-2 rounded-lg select-none", {
           "pl-2": !big,
           "cursor-default": !shouldLink,
           "cursor-pointer": shouldLink,
@@ -218,7 +218,7 @@ function PostContent({ content, big }: { content: string; big?: boolean }) {
 
   return (
     <div
-      className={classNames("whitespace-pre-wrap break-words", {
+      className={classNames("whitespace-pre-wrap break-words select-text", {
         "text-xl": big,
       })}
     >
