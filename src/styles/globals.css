@@ -5,7 +5,7 @@
 :root {
   min-width: 320px;
   font: 16px system-ui, sans-serif;
-  background: hwb(262 6% 86%);
+  background: hsl(263 36% 10%);
   color: #fff;
 }
 
