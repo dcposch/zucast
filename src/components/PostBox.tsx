@@ -110,7 +110,11 @@ export function PostBox({
           )}
         </div>
         {/** Right: header, post content, reply+like buttons */}
-        <div className={classNames("flex flex-col gap-1", { "pt-2": !big })}>
+        <div
+          className={classNames("min-w-0 flex flex-col gap-1", {
+            "pt-2": !big,
+          })}
+        >
           <PostHeader {...{ post, time, big, connUp, noButtons }} />
           <PostContent content={post.content} big={big} />
           {!noButtons && (
