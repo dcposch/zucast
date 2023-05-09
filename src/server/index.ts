@@ -37,7 +37,9 @@ class ZucastServer {
     this.initStatus.load = await status(() => this.load());
 
     // Verify each tx asynchronoously, in the background
-    status(() => feed.validate()).then((s) => (this.initStatus.validate = s));
+    if (process.env.ZUCAST_NO_VALIDATE !== "1") {
+      status(() => feed.validate()).then((s) => (this.initStatus.validate = s));
+    }
 
     // Preload the latest merkle root periodically, for fast login
     preloadLatestRoot();

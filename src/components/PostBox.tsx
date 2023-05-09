@@ -39,12 +39,14 @@ export function PostBox({
   post,
   big,
   noButtons,
+  yesLink,
   connUp,
   connDown,
 }: {
   post: Post;
   big?: boolean;
   noButtons?: boolean;
+  yesLink?: boolean;
   connUp?: boolean;
   connDown?: boolean;
 }) {
@@ -62,7 +64,7 @@ export function PostBox({
     },
     [post.id, router]
   );
-  const shouldLink = !big && !noButtons;
+  const shouldLink = (!big && !noButtons) || yesLink;
 
   // Like and unlike the post
   const [liked, nLikes, toggleLike] = useLikePost(post);

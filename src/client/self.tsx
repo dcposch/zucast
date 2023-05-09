@@ -48,19 +48,29 @@ export function SelfProvider({
 
   const [lastReadID, setLastReadID] = useState(sinceTxID);
 
-  const notes: Notes = useMemo(
-    () => ({
-      notifications: query.data || [],
-      numUnread: (query.data || []).filter((n) => n.txID > lastReadID).length,
-      markRead: (txID: number) => {
-        console.log(`[SELF] marking notifications read up to ${txID}`);
-        localStorage["lastReadID"] = txID;
-        setLastReadID(txID);
-      },
-      lastReadID,
-    }),
-    [query.data, lastReadID]
-  );
+  // const notes: Notes = useMemo(() => {
+  //   return {
+  //     notifications: query.data || [],
+  //     numUnread: (query.data || []).filter((n) => n.txID > lastReadID).length,
+  //     markRead: (txID: number) => {
+  //       console.log(`[SELF] marking notifications up to ${txID}`);
+  //       localStorage["lastReadID"] = txID;
+  //       setLastReadID(txID);
+  //     },
+  //     lastReadID,
+  //   };
+  // }, [query.data, lastReadID]);
+
+  const notes = {
+    notifications: query.data || [],
+    numUnread: (query.data || []).filter((n) => n.txID > lastReadID).length,
+    markRead: (txID: number) => {
+      console.log(`[SELF] marking notifications up to ${txID}`);
+      localStorage["lastReadID"] = txID;
+      setLastReadID(txID);
+    },
+    lastReadID,
+  };
 
   return (
     <SelfContext.Provider value={{ user, signingKey }}>

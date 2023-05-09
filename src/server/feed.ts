@@ -1,10 +1,3 @@
-import {
-  EXTERNAL_NULLIFIER,
-  PROFILE_COLORS,
-  RATE_LIMIT_ACTIONS_PER_HOUR,
-} from "../common/constants";
-import { isValidZuzaluMerkleRoot, verifySignature } from "../common/crypto";
-import { validatePost, validateProfile } from "../common/validation";
 import { SerializedPCD } from "@pcd/pcd-types";
 import {
   SemaphoreGroupPCD,
@@ -12,18 +5,26 @@ import {
   generateMessageHash,
 } from "@pcd/semaphore-group-pcd";
 import {
+  EXTERNAL_NULLIFIER,
+  PROFILE_COLORS,
+  RATE_LIMIT_ACTIONS_PER_HOUR,
+} from "../common/constants";
+import { isValidZuzaluMerkleRoot, verifySignature } from "../common/crypto";
+import {
   Action,
+  NoteSummary,
+  Notification,
   Post,
+  Thread,
   Transaction,
   TransactionAct,
   TransactionAddKey,
-  Thread,
   User,
-  Notification,
   actionModel,
 } from "../common/model";
-import { TypedEvent } from "./event";
 import { time } from "../common/util";
+import { validatePost, validateProfile } from "../common/validation";
+import { TypedEvent } from "./event";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -70,6 +71,8 @@ interface FeedNotification {
   postID: number;
   /** User who liked or replied */
   uid: number;
+  /** Reply ID */
+  replyPostID?: number;
 }
 
 /** Stores the public global feed. */
@@ -246,6 +249,41 @@ export class ZucastFeed {
       .map((n) => this.toNotification(feedUser, n));
   }
 
+  /** Summarize all recent notifications, no cutoff. */
+  loadNoteSummaries(authUID: number): NoteSummary[] {
+    const feedUser = this.feedUsers[authUID];
+    const notes = feedUser.recentNotifications;
+
+    const ret: NoteSummary[] = [];
+    for (const note of notes) {
+      switch (note.type) {
+        case "reply":
+          if (note.replyPostID == null) throw new Error("unreachable");
+          ret.push({
+            post: this.toPost(authUID, this.feedPosts[note.postID]),
+            replyPost: this.toPost(authUID, this.feedPosts[note.replyPostID]),
+            likeUsers: [],
+          });
+          break;
+        case "like":
+          let sum = ret.find(
+            (s) => s.post.id === note.postID && s.replyPost == null
+          );
+          if (sum == null) {
+            sum = {
+              post: this.toPost(authUID, this.feedPosts[note.postID]),
+              likeUsers: [],
+            };
+            ret.push(sum);
+          }
+          sum.likeUsers.push(this.toUser(this.feedUsers[note.uid]));
+          break;
+      }
+    }
+
+    return ret;
+  }
+
   /**
    * Performs an action after validation, including verifying its signature.
    * This is the ONLY public function that modifies the feed.
@@ -420,8 +458,8 @@ export class ZucastFeed {
     switch (type) {
       case "post": {
         const { content, parentID } = action;
-        this.execPost(feedUser, timeMs, content, parentID);
-        if (parentID != null) this.notifyReply(txID, timeMs, uid, parentID);
+        const post = this.execPost(feedUser, timeMs, content, parentID);
+        if (parentID != null) this.notifyReply(txID, timeMs, uid, post.id);
         break;
       }
 
@@ -490,6 +528,8 @@ export class ZucastFeed {
     if (feedPost.parentID != null) {
       this.feedPosts[feedPost.parentID].nDirectReplies++;
     }
+
+    return feedPost;
   }
 
   /** Executes an already-verified like or unlike */
@@ -520,11 +560,13 @@ export class ZucastFeed {
   }
 
   /** Notifies certain parent (& grandparent, etc) posters of a reply. */
-  notifyReply(txID: number, timeMs: number, uid: number, parentID: number) {
+  notifyReply(txID: number, timeMs: number, uid: number, postID: number) {
+    const post = this.feedPosts[postID];
+
     // Find ancestor posts. Root first, direct parent last.
     const ancestors: FeedPost[] = [];
     let aid: number | undefined;
-    for (aid = parentID; aid != null; aid = ancestors[0].parentID) {
+    for (aid = post.parentID; aid != null; aid = ancestors[0].parentID) {
       ancestors.unshift(this.feedPosts[aid]);
     }
 
@@ -533,7 +575,7 @@ export class ZucastFeed {
     for (const ancestor of ancestors) {
       if (notifiedUserIDs.has(ancestor.uid)) continue;
       notifiedUserIDs.add(ancestor.uid);
-      this.notify("reply", txID, timeMs, uid, ancestor.id);
+      this.notify("reply", txID, timeMs, uid, ancestor.id, postID);
     }
   }
 
@@ -543,7 +585,8 @@ export class ZucastFeed {
     txID: number,
     timeMs: number,
     uid: number,
-    postID: number
+    postID: number,
+    replyPostID?: number
   ) {
     const affectedPost = this.feedPosts[postID];
     if (!affectedPost) throw new Error(`Invalid post ${postID}`);
@@ -567,6 +610,7 @@ export class ZucastFeed {
       timeMs,
       txID,
       uid,
+      replyPostID,
     });
     while (affectedFeedUser.recentNotifications.length > 100) {
       affectedFeedUser.recentNotifications.pop();

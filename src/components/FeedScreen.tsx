@@ -2,11 +2,12 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback } from "react";
 import { useEscape } from "../client/hooks";
-import { Thread, User } from "../common/model";
+import { NoteSummary, Thread, User } from "../common/model";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
 import { FeedHeader } from "./FeedHeader";
 import { Modal } from "./Modal";
+import { NoteBox } from "./NoteBox";
 import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
 
@@ -20,6 +21,10 @@ export type FeedType =
       type: "profile";
       profileUser: User;
       tab: string;
+    }
+  | {
+      type: "notes";
+      noteSummaries: NoteSummary[];
     };
 
 export function FeedScreen({
@@ -62,7 +67,7 @@ export function FeedScreen({
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}
           <div className="h-4" />
-          {threads.length === 0 && (
+          {feed.type !== "notes" && threads.length === 0 && (
             <strong className="text-center py-2">no posts yet</strong>
           )}
           {threads.map((thread, i) => (
@@ -72,6 +77,10 @@ export function FeedScreen({
               {...{ thread, selectedPostID }}
             />
           ))}
+          {feed.type === "notes" &&
+            feed.noteSummaries.map((n) => (
+              <NoteBox key={`${n.post.id}-${n.replyPost?.id}`} summary={n} />
+            ))}
         </main>
       </Container>
     </>

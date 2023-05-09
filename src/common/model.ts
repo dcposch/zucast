@@ -51,6 +51,12 @@ export interface Notification {
   user: User;
 }
 
+export interface NoteSummary {
+  post: Post;
+  replyPost?: Post;
+  likeUsers: User[];
+}
+
 export interface Thread {
   rootID: number;
   /** The root post, followed by all replies, in order posted. */

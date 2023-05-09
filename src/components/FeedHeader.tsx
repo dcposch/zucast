@@ -1,13 +1,18 @@
-import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
-import Link from "next/link";
+import {
+  BellFillIcon,
+  BellIcon,
+  PersonFillIcon,
+  PersonIcon,
+} from "@primer/octicons-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useNotes, useSelf } from "src/client/self";
 import { LOGO_160, THEME_COLORS } from "src/common/constants";
-import { LinkSquare, ButtonSquare, Button, ButtonSmall } from "./Button";
-import { H2 } from "./typography";
+import { Button, ButtonSmall, LinkSquare } from "./Button";
 import { FeedType } from "./FeedScreen";
+import { H2 } from "./typography";
 
 export function FeedHeader({
   feed,
@@ -23,14 +28,26 @@ export function FeedHeader({
   const { uid } = self.user;
   const isViewingHome = feed.type === "home";
   const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
+  const isViewingNotes = feed.type === "notes";
   const router = useRouter();
   const goToSelf = useCallback(
     () => router.push(`/user/${uid}`),
     [router, uid]
   );
+  const goToNotes = useCallback(
+    () => router.push(`/notes/${uid}`),
+    [router, uid]
+  );
 
   // Notifications
   const notes = useNotes();
+  useEffect(() => {
+    if (!isViewingNotes) return;
+    const lastReadID = notes.notifications
+      .map((n) => n.txID)
+      .reduce((a, b) => Math.max(a, b), 0);
+    notes.markRead(lastReadID);
+  }, [isViewingNotes, notes]);
 
   // Center logo
   const logo = (
@@ -40,7 +57,7 @@ export function FeedHeader({
   return (
     <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">
       <H2>
-        <div className="w-32 flex items-center gap-2">
+        <div className="w-[10rem] flex items-center gap-2">
           {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
           {feed.type === "home" && "Home"}
           {feed.type === "thread" && "Thread"}
@@ -53,13 +70,21 @@ export function FeedHeader({
           {logo}
         </Link>
       )}
-      <div className="w-32 flex justify-end items-center gap-2">
+      <div className="w-[10rem] flex justify-end items-center gap-1">
+        <ButtonSmall
+          onClick={goToNotes}
+          disabled={isViewingNotes}
+          size="relative w-12 h-8"
+        >
+          {!isViewingNotes && <NoteBadge count={notes.numUnread} />}
+          {isViewingNotes && <BellFillIcon fill={THEME_COLORS["primary"]} />}
+          {!isViewingNotes && <BellIcon />}
+        </ButtonSmall>
         <ButtonSmall
           onClick={goToSelf}
           disabled={isViewingSelf}
-          size="relative w-16 h-8"
+          size="relative w-12 h-8"
         >
-          <NoteBadge count={notes.numUnread} />
           {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
           {!isViewingSelf && <PersonIcon />}
         </ButtonSmall>
