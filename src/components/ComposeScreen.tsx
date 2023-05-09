@@ -1,19 +1,13 @@
+import classNames from "classnames";
+import { useRouter } from "next/router";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { useSelf } from "src/client/self";
 import { useSendAction } from "../client/hooks";
-import { SelfContext } from "../client/self";
 import { MAX_POST_LENGTH } from "../common/constants";
 import { Action, Post } from "../common/model";
-import { useRouter } from "next/router";
-import {
-  ChangeEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
 import { Button } from "./Button";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
-import classNames from "classnames";
 
 export function useComposeModal() {
   const [isOpen, setOpen] = useState(false);
@@ -63,7 +57,7 @@ export function ComposeScreen({
     if (result.isSuccess) onSuccess();
   }, [result.isSuccess, onSuccess]);
 
-  const self = useContext(SelfContext);
+  const self = useSelf();
   if (!self) throw new Error("unreachable");
 
   return (

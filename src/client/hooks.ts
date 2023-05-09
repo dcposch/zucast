@@ -1,13 +1,13 @@
 import { sign } from "../common/crypto";
 import { Action } from "../common/model";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { SelfContext } from "./self";
+import { useSelf } from "./self";
 import { trpc } from "./trpc";
 
 /** Sign an action (cast, like, etc), append to the global log. */
 export function useSendAction() {
   const act = trpc.act.useMutation();
-  const self = useContext(SelfContext);
+  const self = useSelf();
 
   const send = useCallback(
     async (action: Action) => {

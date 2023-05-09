@@ -2,13 +2,17 @@
  * This is the API-handler of your app that contains all your API routes.
  * On a bigger app, you will probably want to split this file up into multiple files.
  */
-import { Transaction } from "../../../common/model";
-import { feed, auth, server } from "../../../server";
-import { publicProcedure, router } from "../../../server/trpc";
+import { initTRPC } from "@trpc/server";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { z } from "zod";
+import { Transaction } from "../../../common/model";
+import { auth, feed, server } from "../../../server";
+import { Context, createContext } from "../../../server/context";
+import { publicProcedure } from "../../../server/trpc";
 
-const appRouter = router({
+const t = initTRPC.context<Context>().create();
+
+const appRouter = t.router({
   login: publicProcedure
     .input(
       z.object({
@@ -42,29 +46,43 @@ const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      console.log(`[TRPC] act by ${input.uid}`);
       const timeMs = Date.now();
       await feed.append({ ...input, timeMs, type: "act" });
       return { success: true };
     }),
 
-  log: publicProcedure
+  log: t.procedure
     .input(
       z.object({
         sinceID: z.number(),
       })
     )
-    .query(({ input }) => {
+    .query(({ input, ctx }) => {
+      if (ctx.authUID == null) throw new Error("Not logged in");
       return feed.loadLog(input.sinceID);
     }),
 
-  loadLikers: publicProcedure
+  loadLikers: t.procedure
     .input(
       z.object({
         postID: z.number(),
       })
     )
-    .query(({ input }) => {
+    .query(({ input, ctx }) => {
+      if (ctx.authUID == null) throw new Error("Not logged in");
       return feed.loadLikers(input.postID);
+    }),
+
+  loadNotifications: t.procedure
+    .input(
+      z.object({
+        sinceTxID: z.number(),
+      })
+    )
+    .query(({ input, ctx }) => {
+      if (ctx.authUID == null) throw new Error("Not logged in");
+      return feed.loadNotifications(ctx.authUID, input.sinceTxID);
     }),
 });
 
@@ -82,5 +100,5 @@ export default trpcNext.createNextApiHandler({
   onError: (ctx) => {
     console.error(`[TRPC] error`, ctx.error);
   },
-  createContext: () => ({}),
+  createContext,
 });

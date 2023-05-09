@@ -1,4 +1,4 @@
-import { SelfContext } from "../client/self";
+import { SelfProvider, useSelf } from "../client/self";
 import { EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
 import { Thread, User } from "../common/model";
@@ -29,9 +29,9 @@ export default function HomePage({ user, threads }: HomePageProps) {
   } else {
     // Finally, show the feed
     return (
-      <SelfContext.Provider value={{ user, signingKey }}>
+      <SelfProvider {...{ user, signingKey }}>
         <FeedScreen feed={{ type: "home" }} threads={threads} />
-      </SelfContext.Provider>
+      </SelfProvider>
     );
   }
 }

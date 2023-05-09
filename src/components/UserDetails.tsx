@@ -1,13 +1,13 @@
-import { SelfContext } from "../client/self";
-import { User } from "../common/model";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
+import { User } from "../common/model";
 import { ButtonSmall } from "./Button";
 import { EditProfileScreen } from "./EditProfileScreen";
 import { Modal } from "./Modal";
 import { UserIcon } from "./UserIcon";
 import { H1 } from "./typography";
+import { useSelf } from "src/client/self";
 
 /** Display a user profile an Posts, Replies, Likes tabs. */
 export function UserDetails({ tab, user }: { tab: string; user: User }) {
@@ -21,7 +21,7 @@ export function UserDetails({ tab, user }: { tab: string; user: User }) {
     router.replace(router.asPath);
   }, [router]);
 
-  const self = useContext(SelfContext);
+  const self = useSelf();
   if (self == null) return null;
 
   return (

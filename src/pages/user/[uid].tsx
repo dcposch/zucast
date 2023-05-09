@@ -1,9 +1,9 @@
-import { SelfContext } from "../../client/self";
+import { GetServerSideProps, Redirect } from "next";
+import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
-import { server, feed } from "../../server";
-import { GetServerSideProps, Redirect } from "next";
+import { feed, server } from "../../server";
 
 interface UserPageProps {
   user: User;
@@ -23,12 +23,12 @@ export default function UserPage({
 
   if (user == null || signingKey == null) return null;
   return (
-    <SelfContext.Provider value={{ user, signingKey }}>
+    <SelfProvider {...{ user, signingKey }}>
       <FeedScreen
         threads={threads}
         feed={{ type: "profile", profileUser, tab }}
       />
-    </SelfContext.Provider>
+    </SelfProvider>
   );
 }
 

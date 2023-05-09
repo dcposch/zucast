@@ -39,6 +39,18 @@ export interface Post {
   nLikes: number;
 }
 
+export interface Notification {
+  type: "like" | "reply";
+  /** Transaction ID that triggered this */
+  txID: number;
+  /** Time, in Unix ms */
+  timeMs: number;
+  /** Post liked or replied to */
+  post: Post;
+  /** User who liked or replied */
+  user: User;
+}
+
 export interface Thread {
   rootID: number;
   /** The root post, followed by all replies, in order posted. */

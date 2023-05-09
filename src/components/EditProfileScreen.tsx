@@ -1,15 +1,15 @@
+import { useCallback, useEffect, useState } from "react";
 import { useSendAction } from "../client/hooks";
-import { SelfContext } from "../client/self";
+import { useSelf } from "../client/self";
 import { PROFILE_COLORS } from "../common/constants";
 import { validateEmoji } from "../common/validation";
-import { useCallback, useContext, useEffect, useState } from "react";
 import { Button, ButtonSmall } from "./Button";
-import { UserIconProfile } from "./UserIcon";
 import { logoutAndReload } from "./LoginScreen";
+import { UserIconProfile } from "./UserIcon";
 
 export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
   // In-progress profile edit
-  const self = useContext(SelfContext);
+  const self = useSelf();
   const [profile, setProfile] = useState(self?.user?.profile);
 
   const changeEmoji = useCallback(() => {

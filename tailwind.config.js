@@ -17,6 +17,7 @@ module.exports = {
       "white-hov": "rgb(255 255 255 / 3%)",
       "white-act": "rgb(255 255 255 / 6%)",
       gray: "hsl(0 0% 70%)",
+      red: "#ff0000",
       error: "rgb(255 100 100)",
     },
   },

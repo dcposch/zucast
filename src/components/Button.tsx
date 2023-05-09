@@ -12,41 +12,28 @@ export function Button(props: JSX.IntrinsicElements["button"]) {
   );
 }
 
-export function ButtonSmall(props: JSX.IntrinsicElements["button"]) {
-  return (
-    <button
-      {...props}
-      className="px-4 py-2 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-hov active:bg-white-act
-           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
-    />
-  );
-}
+const roundedLight = `
+rounded-md font-semibold
+bg-transparent hover:bg-white-hov active:bg-white-act
+disabled:bg-transparent disabled:opacity-75 disabled:cursor-default
+`;
 
-export function LinkSmall(
-  props: LinkProps & {
-    children: ReactNode;
-    style?: CSSProperties;
-  }
+export function ButtonSmall(
+  props: JSX.IntrinsicElements["button"] & { size?: string }
 ) {
-  return (
-    <Link
-      {...props}
-      className="px-4 py-2 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-hov active:bg-white-act
-           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
-    />
-  );
+  const size = props.size || `px-4 py-2 text-center`;
+  return <button {...props} className={`${size} ${roundedLight}`} />;
 }
 
 export function ButtonSquare(props: JSX.IntrinsicElements["button"]) {
+  return <ButtonSmall {...props} size="w-8 h-8 text-center" />;
+}
+
+export function LinkSmall(
+  props: LinkProps & { children: ReactNode; style?: CSSProperties }
+) {
   return (
-    <button
-      {...props}
-      className="w-8 h-8 rounded-md font-semibold text-center
-           bg-transparent hover:bg-white-hov active:bg-white-act
-           disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
-    />
+    <Link {...props} className={`px-4 py-2 text-center ${roundedLight}`} />
   );
 }
 

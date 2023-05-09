@@ -1,22 +1,16 @@
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useCallback } from "react";
 import { useEscape } from "../client/hooks";
 import { Thread, User } from "../common/model";
-import Head from "next/head";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import { useCallback, useContext } from "react";
-import { Button, ButtonSquare, LinkSquare } from "./Button";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
+import { FeedHeader } from "./FeedHeader";
 import { Modal } from "./Modal";
 import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
-import { H2 } from "./typography";
-import { PersonFillIcon, PersonIcon } from "@primer/octicons-react";
-import { SelfContext } from "../client/self";
-import { LOGO_160, THEME_COLORS } from "../common/constants";
-import Link from "next/link";
 
-type FeedType =
+export type FeedType =
   | { type: "home" }
   | {
       type: "thread";
@@ -81,55 +75,5 @@ export function FeedScreen({
         </main>
       </Container>
     </>
-  );
-}
-
-function FeedHeader({
-  feed,
-  showCompose,
-}: {
-  feed: FeedType;
-  showCompose: () => void;
-}) {
-  const self = useContext(SelfContext);
-  if (!self) throw new Error("unreachable");
-
-  const { uid } = self.user;
-  const isViewingHome = feed.type === "home";
-  const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
-  const router = useRouter();
-  const goToSelf = useCallback(
-    () => router.push(`/user/${uid}`),
-    [router, uid]
-  );
-
-  const logo = (
-    <Image priority src={LOGO_160} width={40} height={40} alt="Logo" />
-  );
-
-  return (
-    <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">
-      <H2>
-        <div className="w-32 flex items-center gap-2">
-          {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
-          {feed.type === "home" && "Home"}
-          {feed.type === "thread" && "Thread"}
-          {feed.type === "profile" && `#${feed.profileUser.uid}`}
-        </div>
-      </H2>
-      {isViewingHome && <div className="opacity-80">{logo}</div>}
-      {!isViewingHome && (
-        <Link href="/" className="hover:opacity-80 active:opacity-70">
-          {logo}
-        </Link>
-      )}
-      <div className="w-32 flex justify-end items-center gap-2">
-        <ButtonSquare onClick={goToSelf} disabled={isViewingSelf}>
-          {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
-          {!isViewingSelf && <PersonIcon />}
-        </ButtonSquare>
-        <Button onClick={showCompose}>Post</Button>
-      </div>
-    </header>
   );
 }

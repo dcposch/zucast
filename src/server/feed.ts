@@ -19,6 +19,7 @@ import {
   TransactionAddKey,
   Thread,
   User,
+  Notification,
   actionModel,
 } from "../common/model";
 import { TypedEvent } from "./event";
@@ -29,10 +30,12 @@ export interface FeedUser extends User {
   pubKeys: string[];
   /** Posts by this user */
   posts: FeedPost[];
-  /** Recent actions, for rate limiting and ranking. */
+  /** Recent actions, for rate limiting and ranking. Latest first. */
   recentTransactions: Transaction[];
   /** Posts liked by this user */
   likedPosts: FeedPost[];
+  /** Recent notifications for this user. Latest first. */
+  recentNotifications: FeedNotification[];
 }
 
 interface FeedPost {
@@ -55,6 +58,18 @@ interface FeedPost {
   likedBy: Set<number>;
   /** Number of likes */
   nLikes: number;
+}
+
+interface FeedNotification {
+  type: "like" | "reply";
+  /** Transaction ID that triggered this */
+  txID: number;
+  /** Time, in Unix ms */
+  timeMs: number;
+  /** Post liked or replied to */
+  postID: number;
+  /** User who liked or replied */
+  uid: number;
 }
 
 /** Stores the public global feed. */
@@ -80,8 +95,8 @@ export class ZucastFeed {
 
     console.log(`[FEED] initializing feed from ${transactions.length} actions`);
     const elapsedS = await time(async () => {
-      for (const action of transactions) {
-        await this.exec(action);
+      for (let id = 0; id < transactions.length; id++) {
+        await this.exec(id, transactions[id]);
       }
     });
     this.transactions = transactions;
@@ -218,19 +233,35 @@ export class ZucastFeed {
     return feedUser ? this.toUser(feedUser) : undefined;
   }
 
+  /** Notifications past some recency. */
+  loadNotifications(authUID: number, afterTxID: number): Notification[] {
+    const feedUser = this.feedUsers[authUID];
+    const ix = feedUser.recentNotifications.findIndex(
+      (n) => n.txID > afterTxID
+    );
+    if (ix < 0) return [];
+
+    return feedUser.recentNotifications
+      .slice(ix)
+      .map((n) => this.toNotification(feedUser, n));
+  }
+
   /**
    * Performs an action after validation, including verifying its signature.
    * This is the ONLY public function that modifies the feed.
    */
   async append(tx: Transaction): Promise<User> {
+    // Verify
     if (this.state === "new") {
       throw new Error("Feed initializing, try again soon");
     }
     await this.verify(tx);
-    const user = await this.exec(tx);
+
+    // Execute
+    const id = this.transactions.length;
+    const user = await this.exec(id, tx);
 
     // Log action, emit event
-    const id = this.transactions.length;
     this.transactions.push(tx);
     this.onTransaction.emit({ id, tx });
 
@@ -254,14 +285,14 @@ export class ZucastFeed {
   }
 
   /** Executes an already-verified action. */
-  private async exec(tx: Transaction): Promise<User> {
+  private async exec(txID: number, tx: Transaction): Promise<User> {
     const { type } = tx;
     const feedUser = await (() => {
       switch (type) {
         case "addKey":
           return this.execAddKey(tx);
         case "act":
-          return this.execAct(tx);
+          return this.execAct(txID, tx);
         default:
           throw new Error(`Invalid stored action type ${type}`);
       }
@@ -334,6 +365,7 @@ export class ZucastFeed {
       posts: [],
       recentTransactions: [],
       likedPosts: [],
+      recentNotifications: [],
     };
     this.feedUsers.push(ret);
     this.feedUsersByNullifierHash.set(pcd.claim.nullifierHash, ret);
@@ -355,7 +387,7 @@ export class ZucastFeed {
   }
 
   /** Executes an already-verified user action. */
-  private async execAct(tx: TransactionAct) {
+  private async execAct(txID: number, tx: TransactionAct) {
     const feedUser = this.feedUsers[tx.uid];
 
     // Record user action
@@ -371,30 +403,39 @@ export class ZucastFeed {
 
     // Try to execute the action
     const action = actionModel.parse(JSON.parse(tx.actionJSON));
-    this.execUserAction(feedUser, action, tx.timeMs);
+    this.execUserAction(feedUser, action, txID, tx.timeMs);
 
     return feedUser;
   }
 
   /** Executes and already-verified user action, such as a new post. */
-  private execUserAction(feedUser: FeedUser, action: Action, timeMs: number) {
+  private execUserAction(
+    feedUser: FeedUser,
+    action: Action,
+    txID: number,
+    timeMs: number
+  ) {
     const { type } = action;
+    const { uid } = feedUser;
     switch (type) {
       case "post": {
         const { content, parentID } = action;
         this.execPost(feedUser, timeMs, content, parentID);
+        if (parentID != null) this.notifyReply(txID, timeMs, uid, parentID);
         break;
       }
 
       case "like": {
         const { postID } = action;
         this.execLike(feedUser, postID, 1);
+        this.notify("like", txID, timeMs, uid, postID);
         break;
       }
 
       case "unlike": {
         const { postID } = action;
         this.execLike(feedUser, postID, -1);
+        this.notify("unlike", txID, timeMs, uid, postID);
         break;
       }
 
@@ -478,9 +519,63 @@ export class ZucastFeed {
     feedPost.nLikes += delta;
   }
 
+  /** Notifies certain parent (& grandparent, etc) posters of a reply. */
+  notifyReply(txID: number, timeMs: number, uid: number, parentID: number) {
+    // Find ancestor posts. Root first, direct parent last.
+    const ancestors: FeedPost[] = [];
+    let aid: number | undefined;
+    for (aid = parentID; aid != null; aid = ancestors[0].parentID) {
+      ancestors.unshift(this.feedPosts[aid]);
+    }
+
+    // Notify each user we're replying to exactly once, except ourselves.
+    const notifiedUserIDs = new Set<number>([uid]);
+    for (const ancestor of ancestors) {
+      if (notifiedUserIDs.has(ancestor.uid)) continue;
+      notifiedUserIDs.add(ancestor.uid);
+      this.notify("reply", txID, timeMs, uid, ancestor.id);
+    }
+  }
+
+  /** Adds or removes a notification */
+  private notify(
+    type: "reply" | "like" | "unlike",
+    txID: number,
+    timeMs: number,
+    uid: number,
+    postID: number
+  ) {
+    const affectedPost = this.feedPosts[postID];
+    if (!affectedPost) throw new Error(`Invalid post ${postID}`);
+    const affectedFeedUser = this.feedUsers[affectedPost.uid];
+
+    if (type === "unlike") {
+      // Remove latest like notification, if present
+      const ix = affectedFeedUser.recentNotifications.findIndex(
+        (n) => n.type === "like" && n.postID == postID && n.uid == uid
+      );
+      if (ix >= 0) {
+        affectedFeedUser.recentNotifications.splice(ix, 1);
+      }
+      return;
+    }
+
+    // Add notification
+    affectedFeedUser.recentNotifications.unshift({
+      type,
+      postID,
+      timeMs,
+      txID,
+      uid,
+    });
+    while (affectedFeedUser.recentNotifications.length > 100) {
+      affectedFeedUser.recentNotifications.pop();
+    }
+  }
+
   /** Extracts API-facing data */
-  private toUser(user: FeedUser): User {
-    const { uid, nullifierHash, profile } = user;
+  private toUser(feedUser: FeedUser): User {
+    const { uid, nullifierHash, profile } = feedUser;
     return { uid, nullifierHash, profile };
   }
 
@@ -506,6 +601,19 @@ export class ZucastFeed {
       ret.parentID = parentID;
       ret.parentUID = this.feedPosts[parentID].uid;
     }
+    return ret;
+  };
+
+  /** Hydrates API-facing data */
+  private toNotification = (authUser: FeedUser, n: FeedNotification) => {
+    const ret: Notification = {
+      type: n.type,
+      post: this.toPost(authUser.uid, this.feedPosts[n.postID]),
+      timeMs: n.timeMs,
+      txID: n.txID,
+      user: this.toUser(this.feedUsers[n.uid]),
+    };
+
     return ret;
   };
 }
