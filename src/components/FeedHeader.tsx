@@ -62,6 +62,7 @@ export function FeedHeader({
           {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
           {feed.type === "home" && "Home"}
           {feed.type === "thread" && "Thread"}
+          {feed.type === "notes" && "Notes"}
           {feed.type === "profile" && `#${feed.profileUser.uid}`}
         </div>
       </H2>
@@ -71,24 +72,36 @@ export function FeedHeader({
           {logo}
         </Link>
       )}
-      <div className="w-[10rem] flex justify-end items-center gap-1">
-        <ButtonSmall
-          onClick={goToNotes}
-          disabled={isViewingNotes}
-          size="relative w-10 h-8"
-        >
-          {!isViewingNotes && <NoteBadge count={notes.numUnread} />}
-          {isViewingNotes && <BellFillIcon fill={THEME_COLORS["primary"]} />}
-          {!isViewingNotes && <BellIcon />}
-        </ButtonSmall>
-        <ButtonSmall
-          onClick={goToSelf}
-          disabled={isViewingSelf}
-          size="relative w-10 h-8"
-        >
-          {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
-          {!isViewingSelf && <PersonIcon />}
-        </ButtonSmall>
+      <div className="w-[10rem] flex justify-end items-center">
+        {isViewingNotes && (
+          <div className="opacity-75 pt-0.5 h-8 flex items-center">
+            <BellFillIcon fill={THEME_COLORS["primary"]} />
+          </div>
+        )}
+        {!isViewingNotes && (
+          <ButtonSmall
+            onClick={goToNotes}
+            size={`relative h-8 pl-4 ${isViewingSelf ? "pr-4" : "pr-2"}`}
+          >
+            <NoteBadge count={notes.numUnread} />
+            <BellIcon />
+          </ButtonSmall>
+        )}
+        {isViewingSelf && (
+          <div className="opacity-75 pt-0.5 h-8 flex items-center">
+            <PersonFillIcon fill={THEME_COLORS["primary"]} />
+          </div>
+        )}
+        {!isViewingSelf && (
+          <ButtonSmall
+            onClick={goToSelf}
+            size={`h-8 pr-4 ${isViewingNotes ? "pl-4" : "pl-2"}`}
+          >
+            <PersonIcon />
+          </ButtonSmall>
+        )}
+        {isViewingSelf && <div className="w-5" />}
+        {!isViewingSelf && <div className="w-1" />}
         <Button onClick={showCompose}>Post</Button>
       </div>
     </header>
@@ -98,7 +111,7 @@ export function FeedHeader({
 function NoteBadge({ count }: { count: number }) {
   if (count === 0) return null;
   return (
-    <div className="absolute top-0 flex justify-center items-center w-min min-w-[1.5rem] h-5 rounded-full bg-red text-white text-xs">
+    <div className="absolute top-0 left-3 flex justify-center items-center w-min min-w-[1.5rem] h-5 rounded-full bg-red text-white text-xs">
       {count}
     </div>
   );
