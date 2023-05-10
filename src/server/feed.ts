@@ -590,7 +590,9 @@ export class ZucastFeed {
   ) {
     const affectedPost = this.feedPosts[postID];
     if (!affectedPost) throw new Error(`Invalid post ${postID}`);
+
     const affectedFeedUser = this.feedUsers[affectedPost.uid];
+    if (affectedPost.uid === uid) return; // Don't notify self
 
     if (type === "unlike") {
       // Remove latest like notification, if present
