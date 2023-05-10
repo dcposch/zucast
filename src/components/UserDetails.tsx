@@ -64,8 +64,13 @@ function Label({ text }: { text: string }) {
 }
 
 function Tab({ title, selected }: { title: string; selected?: boolean }) {
+  const router = useRouter();
+
   const tab = title.toLowerCase();
-  const query = tab === "posts" ? "" : `?tab=${tab}`;
+  const href = {
+    pathname: router.basePath + router.asPath.split("?")[0],
+    query: tab === "posts" ? {} : { tab },
+  };
 
   if (selected) {
     return (
@@ -76,7 +81,7 @@ function Tab({ title, selected }: { title: string; selected?: boolean }) {
   }
   return (
     <Link
-      href={`${location.pathname}${query}`}
+      href={href}
       className="flex justify-center items-end font-semibold 
       hover:no-underline hover:bg-white-hov active:bg-white-act"
     >
