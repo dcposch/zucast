@@ -74,7 +74,7 @@ export function FeedHeader({
         <ButtonSmall
           onClick={goToNotes}
           disabled={isViewingNotes}
-          size="relative w-12 h-8"
+          size="relative w-10 h-8"
         >
           {!isViewingNotes && <NoteBadge count={notes.numUnread} />}
           {isViewingNotes && <BellFillIcon fill={THEME_COLORS["primary"]} />}
@@ -83,7 +83,7 @@ export function FeedHeader({
         <ButtonSmall
           onClick={goToSelf}
           disabled={isViewingSelf}
-          size="relative w-12 h-8"
+          size="relative w-10 h-8"
         >
           {isViewingSelf && <PersonFillIcon fill={THEME_COLORS["primary"]} />}
           {!isViewingSelf && <PersonIcon />}

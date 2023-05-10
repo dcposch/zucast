@@ -6,13 +6,8 @@ import { COOKIE_ZUCAST_TOKEN } from "src/common/constants";
 export async function createContext({
   req,
 }: trpcNext.CreateNextContextOptions) {
-  const { cookie } = req.headers;
-  const prefix = `${COOKIE_ZUCAST_TOKEN}=`;
-  if (cookie == null || !cookie.startsWith(prefix)) {
-    return { authUID: null };
-  }
-
-  const authUID = auth.authenticate(cookie.substring(prefix.length));
+  const cookie = req.cookies[COOKIE_ZUCAST_TOKEN];
+  const authUID = auth.authenticate(cookie);
   return { authUID };
 }
 
