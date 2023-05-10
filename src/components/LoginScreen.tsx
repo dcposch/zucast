@@ -32,7 +32,7 @@ export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
     const { pubKeyHex } = signingKey;
     login.mutate({ pcd: JSON.stringify(zupass.serializedPCD), pubKeyHex });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zupass.status]);
+  }, [zupass.status, signingKey]);
 
   // Once that succeeds, set the zucastToken cookie, giving us read access
   const router = useRouter();
