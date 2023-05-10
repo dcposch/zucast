@@ -43,7 +43,10 @@ export function SelfProvider({
   user: User;
   signingKey?: KeyPair;
 }) {
-  const sinceTxID = useMemo(() => Number(localStorage["lastReadID"] || 0), []);
+  const sinceTxID = useMemo(() => {
+    if (typeof localStorage === "undefined") return 0; // SSR
+    return Number(localStorage?.lastReadID || 0);
+  }, []);
   const query = trpc.loadNotifications.useQuery({ sinceTxID });
 
   const [lastReadID, setLastReadID] = useState(sinceTxID);
