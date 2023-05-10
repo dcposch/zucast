@@ -77,6 +77,9 @@ export function FeedScreen({
               {...{ thread, selectedPostID }}
             />
           ))}
+          {feed.type === "notes" && feed.noteSummaries.length === 0 && (
+            <strong className="text-center py-2">no notifications yet</strong>
+          )}
           {feed.type === "notes" &&
             feed.noteSummaries.map((n) => (
               <NoteBox key={`${n.post.id}-${n.replyPost?.id}`} summary={n} />
