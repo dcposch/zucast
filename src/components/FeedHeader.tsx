@@ -43,6 +43,7 @@ export function FeedHeader({
   const notes = useNotes();
   useEffect(() => {
     if (!isViewingNotes) return;
+    if (notes.notifications.length === 0) return;
     const lastReadID = notes.notifications
       .map((n) => n.txID)
       .reduce((a, b) => Math.max(a, b), 0);
