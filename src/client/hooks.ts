@@ -11,7 +11,7 @@ export function useSendAction() {
 
   const send = useCallback(
     async (action: Action) => {
-      if (!self) return;
+      if (self?.signingKey == null) return;
 
       console.log(`[SEND] user ${self.user.uid} executing ${action.type}`);
       const { uid } = self.user;

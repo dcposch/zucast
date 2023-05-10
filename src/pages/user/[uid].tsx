@@ -21,7 +21,7 @@ export default function UserPage({
 }: UserPageProps) {
   const signingKey = useSigningKey();
 
-  if (user == null || signingKey == null) return null;
+  if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
       <FeedScreen

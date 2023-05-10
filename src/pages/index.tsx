@@ -20,11 +20,8 @@ export default function HomePage({ user, threads }: HomePageProps) {
 
   useEffect(() => logoutIfInvalidPCD(zupass), [zupass]);
 
-  if (signingKey == null) {
-    // First, wait for the signing key to generate (nearly instant)
-    return null;
-  } else if (user == null || zupass.status === "logged-out") {
-    // Then, log in, associating the pubkey with our anonymous nullifierHash
+  if (user == null || zupass.status === "logged-out") {
+    // Log in, associating the pubkey with our anonymous nullifierHash
     return <LoginScreen signingKey={signingKey} />;
   } else {
     // Finally, show the feed

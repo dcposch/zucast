@@ -32,10 +32,11 @@ export class ZucastAuth {
   }
 
   authenticate(cookie?: string): number | null {
-    if (!cookie) return null;
+    if (cookie == null || cookie === "") return null;
+
     const token = this.tokenMap.get(cookie);
     if (!token) {
-      console.log(`[AUTH] token not found ${cookie}`);
+      console.log(`[AUTH] token not found '${cookie}'`);
       return null;
     }
     return token.uid;

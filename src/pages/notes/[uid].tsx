@@ -15,7 +15,7 @@ interface NotesPageProps {
 export default function NotesPage({ user, noteSummaries }: NotesPageProps) {
   const signingKey = useSigningKey();
 
-  if (user == null || signingKey == null) return null;
+  if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
       <FeedScreen threads={[]} feed={{ type: "notes", noteSummaries }} />

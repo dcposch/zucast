@@ -5,7 +5,7 @@ import { trpc } from "./trpc";
 
 export interface Self {
   user: User;
-  signingKey: KeyPair;
+  signingKey?: KeyPair;
 }
 
 const SelfContext = createContext<Self | undefined>(undefined);
@@ -41,7 +41,7 @@ export function SelfProvider({
 }: {
   children: React.ReactNode;
   user: User;
-  signingKey: KeyPair;
+  signingKey?: KeyPair;
 }) {
   const sinceTxID = useMemo(() => Number(localStorage["lastReadID"] || 0), []);
   const query = trpc.loadNotifications.useQuery({ sinceTxID });

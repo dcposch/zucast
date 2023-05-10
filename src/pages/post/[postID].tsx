@@ -14,8 +14,8 @@ interface PostPageProps {
 /** Shows a single post, with surrounding thread if applicable. */
 export default function PostPage({ user, thread, postID }: PostPageProps) {
   const signingKey = useSigningKey();
-  if (user == null || signingKey == null) return null;
 
+  if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
       <FeedScreen threads={[thread]} feed={{ type: "thread", postID }} />

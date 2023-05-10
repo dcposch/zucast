@@ -16,7 +16,7 @@ export function logoutAndReload() {
   window.location.reload();
 }
 
-export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
+export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
   const [zupass] = useZupass();
   const login = trpc.login.useMutation();
 
@@ -25,7 +25,9 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
 
   // Once we have a proof from the Zuzalu Passport, upload our signing key
   useEffect(() => {
+    if (signingKey == null) return;
     if (zupass.status !== "logged-in") return;
+
     console.log(`[LOGIN] uploading signing key`);
     const { pubKeyHex } = signingKey;
     login.mutate({ pcd: JSON.stringify(zupass.serializedPCD), pubKeyHex });
@@ -68,7 +70,7 @@ export function LoginScreen({ signingKey }: { signingKey: KeyPair }) {
             <br />
             private to Zuzalu.
           </p>
-          {zupass.status !== "logged-in" && (
+          {zupass.status !== "logged-in" && signingKey && (
             <LoginButton pubKeyHash={signingKey.pubKeyHash} />
           )}
           <div />
