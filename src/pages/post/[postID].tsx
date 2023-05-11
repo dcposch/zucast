@@ -4,6 +4,7 @@ import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
 import { feed, server } from "../../server";
+import { HeadMeta } from "src/components/HeadMeta";
 
 interface PostPageProps {
   user: User;
@@ -15,9 +16,12 @@ interface PostPageProps {
 export default function PostPage({ user, thread, postID }: PostPageProps) {
   const signingKey = useSigningKey();
 
+  const content = thread.posts.find((p) => p.id === postID)?.content;
+
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
+      <HeadMeta title={`#${user.uid} on Zucast`} desc={content} />
       <FeedScreen threads={[thread]} feed={{ type: "thread", postID }} />
     </SelfProvider>
   );

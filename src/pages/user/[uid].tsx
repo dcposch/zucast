@@ -4,6 +4,8 @@ import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
 import { feed, server } from "../../server";
+import Head from "next/head";
+import { HeadMeta } from "src/components/HeadMeta";
 
 interface UserPageProps {
   user: User;
@@ -24,6 +26,7 @@ export default function UserPage({
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
+      <HeadMeta title={`#${user.uid} on Zucast`} />
       <FeedScreen
         threads={threads}
         feed={{ type: "profile", profileUser, tab }}

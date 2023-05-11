@@ -1,3 +1,4 @@
+import { HeadMeta } from "src/components/HeadMeta";
 import { SelfProvider, useSelf } from "../client/self";
 import { EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
@@ -27,6 +28,7 @@ export default function HomePage({ user, threads }: HomePageProps) {
     // Finally, show the feed
     return (
       <SelfProvider {...{ user, signingKey }}>
+        <HeadMeta />
         <FeedScreen feed={{ type: "home" }} threads={threads} />
       </SelfProvider>
     );

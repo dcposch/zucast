@@ -52,9 +52,6 @@ export function FeedScreen({
 
   return (
     <>
-      <Head>
-        <title>Zucast</title>
-      </Head>
       {isOpen && (
         <Modal onClose={hideCompose} title="Compose">
           <ComposeScreen onSuccess={postSucceeded} />

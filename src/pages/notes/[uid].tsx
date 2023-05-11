@@ -5,6 +5,7 @@ import { NoteSummary, Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
 import { feed, server } from "../../server";
 import { useEffect } from "react";
+import { HeadMeta } from "src/components/HeadMeta";
 
 interface NotesPageProps {
   user: User;
@@ -18,6 +19,7 @@ export default function NotesPage({ user, noteSummaries }: NotesPageProps) {
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
+      <HeadMeta title={`Notes · Zucast`} />
       <FeedScreen threads={[]} feed={{ type: "notes", noteSummaries }} />
     </SelfProvider>
   );
