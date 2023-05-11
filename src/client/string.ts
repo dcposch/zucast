@@ -1,5 +1,5 @@
-export function plural(word: string, count: number) {
-  return count === 1 ? word : word + "s";
+export function plural(count: number, word: string) {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
 export function truncate(text: string, length: number) {

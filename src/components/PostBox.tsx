@@ -16,6 +16,8 @@ import { Modal } from "./Modal";
 import { PostLikersScreen } from "./PostLikersScreen";
 import { UserIcon } from "./UserIcon";
 import { Button, ButtonSmall } from "./Button";
+import { plural } from "src/client/string";
+import { useSelf } from "src/client/self";
 
 export function PostBox({
   post,
@@ -54,13 +56,10 @@ export function PostBox({
   const [isLikersOpen, showLikers, hideLikers] = useModal();
 
   // If selected, scroll to this post
-  const maybeScrollTo = useCallback(
-    (e: HTMLDivElement | null) => {
-      if (big && e != null && (e as any).scrollIntoViewIfNeeded) {
-        (e as any).scrollIntoViewIfNeeded();
-      }
-    },
-    [big]
+  const scrollIntoView = useCallback(
+    /** Work around missing scrollIntoViewIfNeeded on React.HTMLDivElement */
+    (e: any) => e?.scrollIntoViewIfNeeded && e.scrollIntoViewIfNeeded(),
+    []
   );
 
   return (
@@ -71,7 +70,10 @@ export function PostBox({
         </Modal>
       )}
       {isLikersOpen && (
-        <Modal onClose={hideLikers} title={`${nLikes} anons liked this post`}>
+        <Modal
+          onClose={hideLikers}
+          title={`${plural(nLikes, "anon")} liked this post`}
+        >
           <PostLikersScreen postID={post.id} />
         </Modal>
       )}
@@ -84,7 +86,7 @@ export function PostBox({
           "cursor-pointer": shouldLink,
           "hover:bg-white-hov": shouldLink,
         })}
-        ref={maybeScrollTo}
+        ref={big ? scrollIntoView : undefined}
       >
         {/** Left: user icon, reply lines */}
         <div className="flex flex-col">
@@ -184,7 +186,7 @@ function ShareLink({ url }: { url: string }) {
   return (
     <ButtonSmall
       onClick={copyURL}
-      size="flex text-xs justify-center items-center w-16 opacity-70 disabled:opacity-100"
+      size="flex text-xs justify-center items-center w-16 opacity-70 hover:opacity-100 disabled:opacity-100"
       disabled={justCopied}
     >
       {!justCopied && <ShareIcon />}

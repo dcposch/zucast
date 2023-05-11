@@ -10,11 +10,17 @@ import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
 
 export function useComposeModal() {
+  const router = useRouter();
+  const { user } = useSelf() || {};
+  const goToLogin = useCallback(() => router.push("/"), [router]);
+
   const [isOpen, setOpen] = useState(false);
-  const showCompose = useCallback(() => setOpen(true), []);
+  const showCompose = useCallback(
+    () => (user ? setOpen(true) : goToLogin),
+    [goToLogin, user]
+  );
   const hideCompose = useCallback(() => setOpen(false), []);
 
-  const router = useRouter();
   const postSucceeded = useCallback(() => {
     setOpen(false);
     router.replace(router.asPath);

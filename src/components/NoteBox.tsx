@@ -47,7 +47,7 @@ export function NoteBox({ summary }: { summary: NoteSummary }) {
             ))}
           </div>
           <div>
-            <strong>{plural("user", summary.likeUsers.length)}</strong> liked
+            <strong>{plural(summary.likeUsers.length, "user")}</strong> liked
             your post
           </div>
           <div className="font-xs break-words text-gray">{post.content}</div>

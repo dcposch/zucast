@@ -69,7 +69,8 @@ const appRouter = t.router({
         postID: z.number(),
       })
     )
-    .query(({ input, ctx }) => {
+    .query(({ input }) => {
+      // Public, no auth
       return feed.loadLikers(input.postID);
     }),
 
