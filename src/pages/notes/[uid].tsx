@@ -1,11 +1,10 @@
 import { GetServerSideProps, Redirect } from "next";
-import { SelfProvider, useNotes } from "../../client/self";
+import { HeadMeta } from "src/components/HeadMeta";
+import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
-import { NoteSummary, Thread, User } from "../../common/model";
+import { NoteSummary, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
 import { feed, server } from "../../server";
-import { useEffect } from "react";
-import { HeadMeta } from "src/components/HeadMeta";
 
 interface NotesPageProps {
   user: User;

@@ -5,6 +5,7 @@ import { MouseEvent, useCallback } from "react";
 import { NoteSummary } from "../common/model";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
+import { plural } from "src/client/string";
 
 export function NoteBox({ summary }: { summary: NoteSummary }) {
   // Link to the post
@@ -46,7 +47,8 @@ export function NoteBox({ summary }: { summary: NoteSummary }) {
             ))}
           </div>
           <div>
-            <strong>{summary.likeUsers.length} users</strong> liked your post
+            <strong>{plural("user", summary.likeUsers.length)}</strong> liked
+            your post
           </div>
           <div className="font-xs break-words text-gray">{post.content}</div>
         </div>

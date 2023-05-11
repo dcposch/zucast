@@ -26,7 +26,7 @@ export default function UserPage({
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
-      <HeadMeta title={`#${user.uid} on Zucast`} />
+      <HeadMeta title={`#${profileUser.uid} on Zucast`} />
       <FeedScreen
         threads={threads}
         feed={{ type: "profile", profileUser, tab }}

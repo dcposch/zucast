@@ -5,6 +5,7 @@ import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
 import { feed, server } from "../../server";
 import { HeadMeta } from "src/components/HeadMeta";
+import { truncate } from "src/client/string";
 
 interface PostPageProps {
   user: User;
@@ -15,13 +16,15 @@ interface PostPageProps {
 /** Shows a single post, with surrounding thread if applicable. */
 export default function PostPage({ user, thread, postID }: PostPageProps) {
   const signingKey = useSigningKey();
-
-  const content = thread.posts.find((p) => p.id === postID)?.content;
-
   if (user == null) return null;
+
+  const post = thread.posts.find((p) => p.id === postID);
+  if (post == null) return null;
+  const title = `#${post.user.uid} on Zucast · ${truncate(post.content, 80)}`;
+
   return (
     <SelfProvider {...{ user, signingKey }}>
-      <HeadMeta title={`#${user.uid} on Zucast`} desc={content} />
+      <HeadMeta title={title} desc={post.content} />
       <FeedScreen threads={[thread]} feed={{ type: "thread", postID }} />
     </SelfProvider>
   );
