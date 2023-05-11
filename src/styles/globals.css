@@ -10,7 +10,7 @@
 }
 
 body {
-  overscroll-behavior-y: none;
+  overflow: hidden;
 }
 
 a:hover {

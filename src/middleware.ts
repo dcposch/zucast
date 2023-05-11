@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/** Log requests. */
 export default function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
