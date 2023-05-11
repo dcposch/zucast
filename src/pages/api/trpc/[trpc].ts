@@ -70,7 +70,6 @@ const appRouter = t.router({
       })
     )
     .query(({ input, ctx }) => {
-      if (ctx.authUID == null) throw new Error("Not logged in");
       return feed.loadLikers(input.postID);
     }),
 

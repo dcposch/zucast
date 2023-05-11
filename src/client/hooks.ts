@@ -28,7 +28,7 @@ export function useSendAction() {
       const signature = await sign(pair.privateKey, actionJSON);
       act.mutate({ uid, pubKeyHex, actionJSON, signature });
     },
-    [act, self]
+    [act, router, self]
   );
 
   return [send, act] as [typeof send, typeof act];

@@ -15,31 +15,7 @@ import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
 import { PostLikersScreen } from "./PostLikersScreen";
 import { UserIcon } from "./UserIcon";
-
-export function useLikePost(post: Post) {
-  const [act, result] = useSendAction();
-
-  // Optimistic update
-  const [[liked, nLikes], setLiked] = useState([post.liked, post.nLikes]);
-  const toggleLike = useCallback(async () => {
-    if (!liked) {
-      setLiked([true, nLikes + 1]);
-      await act({ type: "like", postID: post.id });
-    } else {
-      setLiked([false, nLikes - 1]);
-      await act({ type: "unlike", postID: post.id });
-    }
-  }, [act, post, liked, nLikes]);
-
-  useEffect(() => {
-    if (result.error) {
-      setLiked([post.liked, post.nLikes]);
-      window.alert(result.error.message);
-    }
-  }, [post, result.error]);
-
-  return [liked, nLikes, toggleLike] as const;
-}
+import { Button, ButtonSmall } from "./Button";
 
 export function PostBox({
   post,
@@ -60,15 +36,16 @@ export function PostBox({
   const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
 
   // Link to the post
+  const url = useShareablePostURL(post);
   const time = formatTime(post.timeMs); // eg "just now" or "6m"
   const router = useRouter();
   const goToPost = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as HTMLElement).tagName === "A") return;
       if ((e.target as HTMLElement).tagName === "BUTTON") return;
-      router.push(`/post/${post.id}`);
+      router.push(url);
     },
-    [post.id, router]
+    [router, url]
   );
   const shouldLink = (!big && !noButtons) || yesLink;
 
@@ -123,7 +100,7 @@ export function PostBox({
             "pt-2": !big,
           })}
         >
-          <PostHeader {...{ post, time, big, connUp, noButtons }} />
+          <PostHeader {...{ post, url, time, big, connUp, noButtons }} />
           <PostContent content={post.content} big={big} />
           {!noButtons && (
             <div className="flex gap-1">
@@ -152,12 +129,14 @@ export function PostBox({
 
 function PostHeader({
   post,
+  url,
   time,
   big,
   noButtons,
   connUp,
 }: {
   post: Post;
+  url: string;
   time: string;
   big?: boolean;
   noButtons?: boolean;
@@ -186,28 +165,31 @@ function PostHeader({
           )}
         </span>
       </div>
-      {big && <ShareLink to={post} />}
+      {big && <ShareLink url={url} />}
     </header>
   );
 }
 
-function ShareLink({ to }: { to: Post }) {
-  const [share, setShare] = useState<string>();
-  useEffect(() => {
-    calcPostShareToken({ ...to, uid: to.user.uid }).then(setShare);
-  }, [to]);
+function ShareLink({ url }: { url: string }) {
+  const copyURL = useCallback(() => {
+    const fullURL = window.location.origin + url;
+    window.navigator.clipboard.writeText(fullURL);
 
-  if (share == null) return null;
+    setJustCopied(true);
+    setTimeout(() => setJustCopied(false), 2000);
+  }, [url]);
 
-  const url = `/post/${to.id}?share=${share}`;
+  const [justCopied, setJustCopied] = useState(false);
+
   return (
-    <Link
-      href={url}
-      className="flex w-16 justify-center items-center rounded-md opacity-70
-    hover:opacity-100 hover:no-underline hover:bg-white-hov active:bg-white-act"
+    <ButtonSmall
+      onClick={copyURL}
+      size="flex text-xs justify-center items-center w-16 opacity-70 disabled:opacity-100"
+      disabled={justCopied}
     >
-      <ShareIcon />
-    </Link>
+      {!justCopied && <ShareIcon />}
+      {justCopied && <div>Copied</div>}
+    </ButtonSmall>
   );
 }
 
@@ -314,6 +296,42 @@ function BottomButton(props: JSX.IntrinsicElements["button"]) {
            disabled:bg-transparent disabled:opacity-75 disabled:cursor-default"
     />
   );
+}
+
+function useShareablePostURL(post: Post) {
+  const [share, setShare] = useState<string>();
+  useEffect(() => {
+    calcPostShareToken({ ...post, uid: post.user.uid }).then(setShare);
+  }, [post]);
+
+  const url = `/post/${post.id}`;
+  if (share == null) return url;
+  return `${url}?share=${share}`;
+}
+
+function useLikePost(post: Post) {
+  const [act, result] = useSendAction();
+
+  // Optimistic update
+  const [[liked, nLikes], setLiked] = useState([post.liked, post.nLikes]);
+  const toggleLike = useCallback(async () => {
+    if (!liked) {
+      setLiked([true, nLikes + 1]);
+      await act({ type: "like", postID: post.id });
+    } else {
+      setLiked([false, nLikes - 1]);
+      await act({ type: "unlike", postID: post.id });
+    }
+  }, [act, post, liked, nLikes]);
+
+  useEffect(() => {
+    if (result.error) {
+      setLiked([post.liked, post.nLikes]);
+      window.alert(result.error.message);
+    }
+  }, [post, result.error]);
+
+  return [liked, nLikes, toggleLike] as const;
 }
 
 function formatTime(timeMs: number) {
