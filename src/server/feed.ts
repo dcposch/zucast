@@ -201,6 +201,10 @@ export class ZucastFeed {
     return this.feedUsers[uid];
   }
 
+  loadFeedPost(postID: number): FeedPost {
+    return this.feedPosts[postID];
+  }
+
   loadUserPosts(authUID: number, uid: number): Thread[] {
     const feedUser = this.feedUsers[uid];
     return feedUser.posts

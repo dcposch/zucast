@@ -148,3 +148,22 @@ async function fetchIsValidRoot(root: string) {
   else if (res.status === 404) return false;
   throw new Error(`Server error ${res.status} fetching merkle root ${root}`);
 }
+
+export async function calcPostShareToken({
+  id,
+  parentID,
+  uid,
+  timeMs,
+  content,
+}: {
+  id: number;
+  parentID?: number;
+  uid: number;
+  timeMs: number;
+  content: string;
+}) {
+  const preimage = JSON.stringify([id, parentID || 0, uid, timeMs, content]);
+  const preimageBytes = new TextEncoder().encode(preimage);
+  const hashBytes = await crypto.subtle.digest("SHA-256", preimageBytes);
+  return Buffer.from(hashBytes).toString("hex").substring(0, 12);
+}

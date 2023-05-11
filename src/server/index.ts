@@ -4,7 +4,7 @@ import { GetServerSidePropsContext } from "next";
 import { ZucastAuth } from "./auth";
 import { DB } from "./db";
 import { ZucastFeed } from "./feed";
-import { preloadLatestRoot } from "../common/crypto";
+import { calcPostShareToken, preloadLatestRoot } from "../common/crypto";
 
 interface InitStatus {
   elapsedMs: number;
@@ -73,6 +73,15 @@ class ZucastServer {
     const { uid, nullifierHash, profile } = feed.loadUser(loggedInUid);
     const user: User = { uid, nullifierHash, profile };
     return user;
+  }
+
+  /** Share link authentication */
+  async authPostShareToken(share: string, postID: number): Promise<boolean> {
+    // Share token is simply the hash of the post so far.
+    // (Logged-out user could guess only if they know the exact thread already.)
+    const post = feed.loadFeedPost(postID);
+    if (!post) return false;
+    return share === (await calcPostShareToken(post));
   }
 
   /** Status monitoring */

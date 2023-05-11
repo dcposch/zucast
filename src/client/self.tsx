@@ -4,7 +4,7 @@ import { Notification, User } from "../common/model";
 import { trpc } from "./trpc";
 
 export interface Self {
-  user: User;
+  user?: User;
   signingKey?: KeyPair;
 }
 
@@ -40,7 +40,7 @@ export function SelfProvider({
   signingKey,
 }: {
   children: React.ReactNode;
-  user: User;
+  user?: User;
   signingKey?: KeyPair;
 }) {
   const sinceTxID = useMemo(() => {

@@ -25,17 +25,17 @@ export function FeedHeader({
   if (!self) throw new Error("unreachable");
 
   // Navigation
-  const { uid } = self.user;
+  const uid = self.user?.uid;
   const isViewingHome = feed.type === "home";
   const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
   const isViewingNotes = feed.type === "notes";
   const router = useRouter();
   const goToSelf = useCallback(
-    () => router.push(`/user/${uid}`),
+    () => router.push(uid == null ? "/" : `/user/${uid}`),
     [router, uid]
   );
   const goToNotes = useCallback(
-    () => router.push(`/notes/${uid}`),
+    () => router.push(uid == null ? "/" : `/notes/${uid}`),
     [router, uid]
   );
 

@@ -1,10 +1,16 @@
-import { useModal, useSendAction } from "../client/hooks";
-import { Post } from "../common/model";
-import { CommentIcon, HeartFillIcon, HeartIcon } from "@primer/octicons-react";
+import {
+  CommentIcon,
+  HeartFillIcon,
+  HeartIcon,
+  ShareIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { MouseEvent, useCallback, useEffect, useState } from "react";
+import { calcPostShareToken } from "src/common/crypto";
+import { useModal, useSendAction } from "../client/hooks";
+import { Post } from "../common/model";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
 import { PostLikersScreen } from "./PostLikersScreen";
@@ -113,7 +119,7 @@ export function PostBox({
         </div>
         {/** Right: header, post content, reply+like buttons */}
         <div
-          className={classNames("min-w-0 flex flex-col gap-1", {
+          className={classNames("min-w-0 flex-grow flex flex-col gap-1", {
             "pt-2": !big,
           })}
         >
@@ -158,27 +164,50 @@ function PostHeader({
   connUp?: boolean;
 }) {
   return (
-    <header className={classNames({ "text-lg": big })}>
-      <strong>
-        {noButtons && <span>#{post.user.uid}</span>}
-        {!noButtons && (
-          <Link href={`/user/${post.user.uid}`}>#{post.user.uid}</Link>
-        )}
-      </strong>
-      <span className="text-gray">
-        {" · "}
-        {noButtons && <span>{time}</span>}
-        {!noButtons && <Link href={`/post/${post.id}`}>{time}</Link>}
-        {post.parentID != null && !noButtons && !connUp && (
-          <>
-            {" · "}
-            <Link href={`/post/${post.parentID}`}>
-              replying to #{post.parentUID}
-            </Link>
-          </>
-        )}
-      </span>
+    <header className={classNames("flex justify-between", { "text-lg": big })}>
+      <div>
+        <strong>
+          {noButtons && <span>#{post.user.uid}</span>}
+          {!noButtons && (
+            <Link href={`/user/${post.user.uid}`}>#{post.user.uid}</Link>
+          )}
+        </strong>
+        <span className="text-gray">
+          {" · "}
+          {noButtons && <span>{time}</span>}
+          {!noButtons && <Link href={`/post/${post.id}`}>{time}</Link>}
+          {post.parentID != null && !noButtons && !connUp && (
+            <>
+              {" · "}
+              <Link href={`/post/${post.parentID}`}>
+                replying to #{post.parentUID}
+              </Link>
+            </>
+          )}
+        </span>
+      </div>
+      {big && <ShareLink to={post} />}
     </header>
+  );
+}
+
+function ShareLink({ to }: { to: Post }) {
+  const [share, setShare] = useState<string>();
+  useEffect(() => {
+    calcPostShareToken({ ...to, uid: to.user.uid }).then(setShare);
+  }, [to]);
+
+  if (share == null) return null;
+
+  const url = `/post/${to.id}?share=${share}`;
+  return (
+    <Link
+      href={url}
+      className="flex w-16 justify-center items-center rounded-md opacity-70
+    hover:opacity-100 hover:no-underline hover:bg-white-hov active:bg-white-act"
+    >
+      <ShareIcon />
+    </Link>
   );
 }
 

@@ -58,7 +58,7 @@ export function ComposeScreen({
   }, [result.isSuccess, onSuccess]);
 
   const self = useSelf();
-  if (!self) throw new Error("unreachable");
+  if (self?.user == null) throw new Error("unreachable");
 
   return (
     <div>

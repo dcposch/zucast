@@ -37,7 +37,7 @@ export function UserDetails({ tab, user }: { tab: string; user: User }) {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <H1>#{user.uid}</H1>
-              {self.user.uid === user.uid && (
+              {self.user?.uid === user.uid && (
                 <ButtonSmall onClick={editProfile}>Edit</ButtonSmall>
               )}
             </div>
