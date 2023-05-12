@@ -15,10 +15,8 @@ export function useComposeModal() {
   const goToLogin = useCallback(() => router.push("/"), [router]);
 
   const [isOpen, setOpen] = useState(false);
-  const showCompose = useCallback(
-    () => (user ? setOpen(true) : goToLogin),
-    [goToLogin, user]
-  );
+  const open = useCallback(() => setOpen(true), []);
+  const showCompose = user ? open : goToLogin;
   const hideCompose = useCallback(() => setOpen(false), []);
 
   const postSucceeded = useCallback(() => {
