@@ -59,7 +59,7 @@ export function FeedScreen({
       )}
       <Container>
         <FeedHeader feed={feed} showCompose={showCompose} />
-        <main className="flex flex-col pb-16">
+        <main className="flex flex-col pb-32">
           {feed.type === "profile" && (
             <UserDetails tab={feed.tab} user={feed.profileUser} />
           )}

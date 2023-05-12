@@ -10,7 +10,8 @@
 }
 
 body {
-  overflow: hidden;
+  overscroll-behavior-y: none;
+  position: relative;
 }
 
 a:hover {
