@@ -21,6 +21,12 @@ export function useSigningKey() {
   useEffect(() => {
     console.log(`[CRYPTO] loading or creating signing key`);
     (async () => {
+      // How do people still use Brave?
+      if (window.localStorage == null) {
+        window.alert("Local storage missing. Please use a normal browser.");
+        return;
+      }
+
       let storedJson = localStorage["signingKey"];
       let keypair = await tryImportKeypair(storedJson);
       if (keypair == null) {
