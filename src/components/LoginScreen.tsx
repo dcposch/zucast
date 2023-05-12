@@ -9,6 +9,7 @@ import { Container } from "./Container";
 import Head from "next/head";
 import { H1 } from "./typography";
 import { useRouter } from "next/router";
+import { HeadMeta } from "./HeadMeta";
 
 export function logoutAndReload() {
   setCookie();
@@ -49,9 +50,7 @@ export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
 
   return (
     <>
-      <Head>
-        <title>Zucast Login</title>
-      </Head>
+      <HeadMeta />
       <Container>
         <div className="leading-normal flex flex-col gap-4 text-center items-center">
           <div className="h-8" />

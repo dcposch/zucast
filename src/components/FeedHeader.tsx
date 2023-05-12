@@ -51,9 +51,7 @@ export function FeedHeader({
   }, [isViewingNotes, notes]);
 
   // Center logo
-  const logo = (
-    <Image priority src={LOGO_160} width={40} height={40} alt="Logo" />
-  );
+  const logo = <Image src={LOGO_160} width={40} height={40} alt="Logo" />;
 
   return (
     <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">

@@ -19,14 +19,17 @@ export default function PostPage({ user, thread, postID }: PostPageProps) {
 
   // Render nothing during redirect.
   if (thread == null) return null;
-
   const post = thread.posts.find((p) => p.id === postID);
   if (post == null) return null;
-  const title = `#${post.user.uid} on Zucast · ${truncate(post.content, 80)}`;
+
+  // Make link previews look nice
+  const author = `#${post.user.uid} on Zucast`;
+  const title =
+    user == null ? author : `${author} · ${truncate(post.content, 60)}`;
 
   return (
     <SelfProvider {...{ user: user || undefined, signingKey }}>
-      <HeadMeta title={title} desc={post.content} />
+      <HeadMeta title={title} desc={post.content} time={post.timeMs / 1000} />
       <FeedScreen threads={[thread]} feed={{ type: "thread", postID }} />
     </SelfProvider>
   );

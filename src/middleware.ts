@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { server } from "./server";
 
 /** Log requests. */
 export default function middleware(request: NextRequest) {

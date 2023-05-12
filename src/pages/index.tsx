@@ -1,14 +1,14 @@
+import { GetServerSideProps } from "next";
+import { useEffect } from "react";
 import { HeadMeta } from "src/components/HeadMeta";
-import { SelfProvider, useSelf } from "../client/self";
+import { useZupass } from "zukit";
+import { SelfProvider } from "../client/self";
 import { EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
 import { Thread, User } from "../common/model";
 import { FeedScreen } from "../components/FeedScreen";
 import { LoginScreen, logoutAndReload } from "../components/LoginScreen";
 import { feed, server } from "../server";
-import { GetServerSideProps } from "next";
-import { useEffect } from "react";
-import { useZupass } from "zukit";
 
 interface HomePageProps {
   user: User | null;
