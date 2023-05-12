@@ -5,6 +5,9 @@ import { ButtonSmall } from "./Button";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
 
+// Don't preserve across hard refresh
+const expandedThreadIDs = new Set<number>();
+
 export function ThreadBox({
   thread,
   selectedPostID,
@@ -17,9 +20,12 @@ export function ThreadBox({
   const [expanded, setExpanded] = useState(() => {
     if (thread.posts.length <= 3) return true;
     if (thread.posts.find((post) => post.id === selectedPostID)) return true;
-    return false;
+    return expandedThreadIDs.has(thread.rootID);
   });
-  const expand = useCallback(() => setExpanded(true), []);
+  const expand = useCallback(() => {
+    setExpanded(true);
+    expandedThreadIDs.add(thread.rootID);
+  }, [thread.rootID]);
   const { posts } = thread;
 
   let postElems: ReactNode[];

@@ -1,6 +1,6 @@
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback } from "react";
+import { useRestoreScroll } from "src/client/useRestoreScroll";
 import { useEscape } from "../client/hooks";
 import { NoteSummary, Thread, User } from "../common/model";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
@@ -47,6 +47,9 @@ export function FeedScreen({
     [feed.type, router]
   );
   useEscape(goBack);
+
+  // Restore scroll on nav
+  useRestoreScroll();
 
   console.log(`[FEED] ${feed.type} rendering ${threads.length} threads`);
 
