@@ -22,7 +22,7 @@ export function HeadMeta({
       <meta name="theme-color" content={THEME_COLORS["midnight"]} />
       {date && <meta name="og:type" content="article" />}
       {date && <meta property="article:published_time" content={date} />}
-      <meta name="og:image" content="https://zuca.st/logo-480-messenger.png" />
+      <meta name="og:image" content="https://zuca.st/logo-280-telegram.png" />
       <meta name="og:title" content={title} />
       <meta name="og:description" content={desc} />
       <link rel="icon" href="/logo-160.png" sizes="160x160" />
