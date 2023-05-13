@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSendAction } from "../client/hooks";
-import { useSelf } from "../client/self";
+import { useUser } from "../client/self";
 import { PROFILE_COLORS } from "../common/constants";
 import { validateEmoji } from "../common/validation";
 import { Button, ButtonSmall } from "./Button";
@@ -9,8 +9,8 @@ import { UserIconProfile } from "./UserIcon";
 
 export function EditProfileScreen({ onSuccess }: { onSuccess: () => void }) {
   // In-progress profile edit
-  const self = useSelf();
-  const [profile, setProfile] = useState(self?.user?.profile);
+  const user = useUser();
+  const [profile, setProfile] = useState(user?.profile);
 
   const changeEmoji = useCallback(() => {
     if (!profile) return;

@@ -6,7 +6,7 @@ import { Cookie, EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
 import { SortAlgo, Thread, User } from "../common/model";
 import { parseSortAlgo } from "../common/sort";
-import { FeedScreen } from "../components/FeedScreen";
+import { FeedScreen, FeedType } from "../components/FeedScreen";
 import { HeadMeta } from "../components/HeadMeta";
 import { LoginScreen, logoutAndReload } from "../components/LoginScreen";
 import { feed, server } from "../server";
@@ -16,6 +16,8 @@ interface HomePageProps {
   threads: Thread[];
   sortAlgo: SortAlgo;
 }
+
+const feedHome: FeedType = { type: "home" };
 
 export default function HomePage({ user, threads, sortAlgo }: HomePageProps) {
   const signingKey = useSigningKey();
@@ -31,7 +33,7 @@ export default function HomePage({ user, threads, sortAlgo }: HomePageProps) {
     return (
       <SelfProvider {...{ user, signingKey }}>
         <HeadMeta />
-        <FeedScreen feed={{ type: "home" }} {...{ threads, sortAlgo }} />
+        <FeedScreen feed={feedHome} {...{ threads, sortAlgo }} />
       </SelfProvider>
     );
   }

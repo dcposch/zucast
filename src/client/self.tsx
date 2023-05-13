@@ -3,16 +3,17 @@ import { KeyPair } from "../common/crypto";
 import { Notification, User } from "../common/model";
 import { trpc } from "./trpc";
 
-export interface Self {
-  user?: User;
-  signingKey?: KeyPair;
-}
-
-const SelfContext = createContext<Self | undefined>(undefined);
+const UserContext = createContext<User | undefined>(undefined);
+const SigningKeyContext = createContext<KeyPair | undefined>(undefined);
 
 /** Returns the logged-in anonymous user. */
-export function useSelf(): Self | undefined {
-  return useContext(SelfContext);
+export function useUser(): User | undefined {
+  return useContext(UserContext);
+}
+
+/** Returns our signing key, used to perform actions. */
+export function useSigningKey(): KeyPair | undefined {
+  return useContext(SigningKeyContext);
 }
 
 export interface Notes {
@@ -66,8 +67,10 @@ export function SelfProvider({
   );
 
   return (
-    <SelfContext.Provider value={{ user, signingKey }}>
-      <NotesContext.Provider value={notes}>{children}</NotesContext.Provider>
-    </SelfContext.Provider>
+    <UserContext.Provider value={user}>
+      <SigningKeyContext.Provider value={signingKey}>
+        <NotesContext.Provider value={notes}>{children}</NotesContext.Provider>
+      </SigningKeyContext.Provider>
+    </UserContext.Provider>
   );
 }

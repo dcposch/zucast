@@ -1,25 +1,33 @@
 import { GetServerSideProps, Redirect } from "next";
 import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
-import { NoteSummary, User } from "../../common/model";
-import { FeedScreen } from "../../components/FeedScreen";
+import { NoteSummary, Thread, User } from "../../common/model";
+import { FeedScreen, FeedType } from "../../components/FeedScreen";
 import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
+import { ComponentProps, useMemo } from "react";
 
 interface NotesPageProps {
   user: User;
   noteSummaries: NoteSummary[];
 }
 
+const empty: Thread[] = [];
+
 /** Shows profile information for a single user, plus their latest posts. */
 export default function NotesPage({ user, noteSummaries }: NotesPageProps) {
   const signingKey = useSigningKey();
+
+  const feed = useMemo<FeedType>(
+    () => ({ type: "notes", noteSummaries }),
+    [noteSummaries]
+  );
 
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
       <HeadMeta title="Notes · Zucast" />
-      <FeedScreen threads={[]} feed={{ type: "notes", noteSummaries }} />
+      <FeedScreen threads={empty} feed={feed} />
     </SelfProvider>
   );
 }

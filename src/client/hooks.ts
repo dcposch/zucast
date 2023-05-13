@@ -2,33 +2,33 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { sign } from "../common/crypto";
 import { Action } from "../common/model";
-import { useSelf } from "./self";
+import { useSigningKey, useUser } from "./self";
 import { trpc } from "./trpc";
 
 /** Sign an action (cast, like, etc), append to the global log. */
 export function useSendAction() {
   const act = trpc.act.useMutation();
-  const self = useSelf();
-
+  const user = useUser();
+  const signingKey = useSigningKey();
   const router = useRouter();
 
   const send = useCallback(
     async (action: Action) => {
-      if (self?.user == null) {
+      if (user == null) {
         // Redirect to login screen
         router.push("/");
         return;
       }
-      if (self?.signingKey == null) throw new Error("unreachable");
+      if (signingKey == null) throw new Error("unreachable");
 
-      console.log(`[SEND] user ${self.user.uid} executing ${action.type}`);
-      const { uid } = self.user;
-      const { pair, pubKeyHex } = self.signingKey;
+      console.log(`[SEND] user ${user.uid} executing ${action.type}`);
+      const { uid } = user;
+      const { pair, pubKeyHex } = signingKey;
       const actionJSON = JSON.stringify(action);
       const signature = await sign(pair.privateKey, actionJSON);
       act.mutate({ uid, pubKeyHex, actionJSON, signature });
     },
-    [act, router, self]
+    [act, router, signingKey, user]
   );
 
   return [send, act] as [typeof send, typeof act];

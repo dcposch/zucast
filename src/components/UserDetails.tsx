@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
-import { useSelf } from "../client/self";
+import { useUser } from "../client/self";
 import { User } from "../common/model";
 import { ButtonSmall } from "./Button";
 import { EditProfileScreen } from "./EditProfileScreen";
@@ -21,8 +21,8 @@ export function UserDetails({ tab, user }: { tab: string; user: User }) {
     router.replace(router.asPath);
   }, [router]);
 
-  const self = useSelf();
-  if (self == null) return null;
+  const selfUser = useUser();
+  if (selfUser == null) return null;
 
   return (
     <>
@@ -37,7 +37,7 @@ export function UserDetails({ tab, user }: { tab: string; user: User }) {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <H1>#{user.uid}</H1>
-              {self.user?.uid === user.uid && (
+              {selfUser.uid === user.uid && (
                 <ButtonSmall onClick={editProfile}>Edit</ButtonSmall>
               )}
             </div>

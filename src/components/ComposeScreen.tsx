@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { useRouter } from "next/router";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { useSendAction } from "../client/hooks";
-import { useSelf } from "../client/self";
+import { useUser } from "../client/self";
 import { MAX_POST_LENGTH } from "../common/constants";
 import { Action, Post } from "../common/model";
 import { Button } from "./Button";
@@ -11,7 +11,7 @@ import { UserIcon } from "./UserIcon";
 
 export function useComposeModal() {
   const router = useRouter();
-  const { user } = useSelf() || {};
+  const user = useUser();
   const goToLogin = useCallback(() => router.push("/"), [router]);
 
   const [isOpen, setOpen] = useState(false);
@@ -61,8 +61,8 @@ export function ComposeScreen({
     if (result.isSuccess) onSuccess();
   }, [result.isSuccess, onSuccess]);
 
-  const self = useSelf();
-  if (self?.user == null) throw new Error("unreachable");
+  const user = useUser();
+  if (user == null) throw new Error("unreachable");
 
   return (
     <div>
@@ -70,7 +70,7 @@ export function ComposeScreen({
       {replyTo && <div className="w-6 h-6 border-r border-gray" />}
       <div className="flex-grow flex gap-6 items-stretch">
         <div>
-          <UserIcon big user={self.user} />
+          <UserIcon big user={user} />
         </div>
         <div className="flex-grow flex flex-col">
           <textarea

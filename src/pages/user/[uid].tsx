@@ -2,9 +2,10 @@ import { GetServerSideProps, Redirect } from "next";
 import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
-import { FeedScreen } from "../../components/FeedScreen";
+import { FeedScreen, FeedType } from "../../components/FeedScreen";
 import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
+import { useMemo } from "react";
 
 interface UserPageProps {
   user: User;
@@ -22,14 +23,16 @@ export default function UserPage({
 }: UserPageProps) {
   const signingKey = useSigningKey();
 
+  const feed = useMemo<FeedType>(
+    () => ({ type: "profile", profileUser, tab }),
+    [profileUser, tab]
+  );
+
   if (user == null) return null;
   return (
     <SelfProvider {...{ user, signingKey }}>
       <HeadMeta title={`#${profileUser.uid} on Zucast`} />
-      <FeedScreen
-        threads={threads}
-        feed={{ type: "profile", profileUser, tab }}
-      />
+      <FeedScreen threads={threads} feed={feed} />
     </SelfProvider>
   );
 }

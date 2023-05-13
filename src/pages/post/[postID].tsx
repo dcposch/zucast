@@ -3,9 +3,10 @@ import { SelfProvider } from "../../client/self";
 import { truncate } from "../../client/string";
 import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
-import { FeedScreen } from "../../components/FeedScreen";
+import { FeedScreen, FeedType } from "../../components/FeedScreen";
 import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
+import { useMemo } from "react";
 
 interface PostPageProps {
   user: User | null;
@@ -16,6 +17,10 @@ interface PostPageProps {
 /** Shows a single post, with surrounding thread if applicable. */
 export default function PostPage({ user, thread, postID }: PostPageProps) {
   const signingKey = useSigningKey();
+
+  // Memoize
+  const threads = useMemo(() => [thread], [thread]);
+  const feed = useMemo<FeedType>(() => ({ type: "thread", postID }), [postID]);
 
   // Render nothing during redirect.
   if (thread == null) return null;
@@ -30,7 +35,7 @@ export default function PostPage({ user, thread, postID }: PostPageProps) {
   return (
     <SelfProvider {...{ user: user || undefined, signingKey }}>
       <HeadMeta title={title} desc={post.content} time={post.timeMs / 1000} />
-      <FeedScreen threads={[thread]} feed={{ type: "thread", postID }} />
+      <FeedScreen threads={threads} feed={feed} />
     </SelfProvider>
   );
 }

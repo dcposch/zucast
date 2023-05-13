@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useEffect } from "react";
-import { useNotes, useSelf } from "../client/self";
+import { useNotes, useUser } from "../client/self";
 import { LOGO_160, THEME_COLORS } from "../common/constants";
 import { SortAlgo } from "../common/model";
 import { Button, ButtonSmall, LinkSquare } from "./Button";
@@ -25,11 +25,11 @@ export function FeedHeader({
   showCompose: () => void;
   sortAlgo: SortAlgo;
 }) {
-  const self = useSelf();
-  if (!self) throw new Error("unreachable");
+  const user = useUser();
+  if (!user) throw new Error("unreachable");
 
   // Navigation
-  const uid = self.user?.uid;
+  const uid = user?.uid;
   const isViewingHome = feed.type === "home";
   const isViewingSelf = feed.type === "profile" && feed.profileUser.uid === uid;
   const isViewingNotes = feed.type === "notes";

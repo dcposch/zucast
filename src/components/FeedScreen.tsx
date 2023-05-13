@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useEscape } from "../client/hooks";
 import { useRestoreScroll } from "../client/useRestoreScroll";
 import { NoteSummary, SortAlgo, Thread, User } from "../common/model";
@@ -10,6 +10,7 @@ import { Modal } from "./Modal";
 import { NoteBox } from "./NoteBox";
 import { ThreadBox } from "./ThreadBox";
 import { UserDetails } from "./UserDetails";
+import { CSSProperties } from "styled-components";
 
 export type FeedType =
   | { type: "home" }
@@ -27,7 +28,7 @@ export type FeedType =
       noteSummaries: NoteSummary[];
     };
 
-export function FeedScreen({
+export const FeedScreen = memo(function FeedScreen({
   feed,
   threads,
   sortAlgo,
@@ -93,4 +94,4 @@ export function FeedScreen({
       </Container>
     </>
   );
-}
+});
