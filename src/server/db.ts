@@ -1,7 +1,6 @@
-import { Client, ClientConfig, Pool } from "pg";
-import { AuthToken } from "./auth";
+import { Client, ClientConfig, Pool, PoolConfig } from "pg";
 import { Transaction } from "../common/model";
-import { PoolConfig } from "pg";
+import { AuthToken } from "./auth";
 
 /** Credentials automatically come from env.PGUSER etc, or from PGURL. */
 const dbConfig: ClientConfig = {

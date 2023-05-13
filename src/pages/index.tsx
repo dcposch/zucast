@@ -1,13 +1,13 @@
 import { GetServerSideProps } from "next";
 import { useEffect } from "react";
-import { parseSortAlgo } from "src/common/sort";
-import { HeadMeta } from "src/components/HeadMeta";
 import { useZupass } from "zukit";
 import { SelfProvider } from "../client/self";
 import { Cookie, EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
 import { SortAlgo, Thread, User } from "../common/model";
+import { parseSortAlgo } from "../common/sort";
 import { FeedScreen } from "../components/FeedScreen";
+import { HeadMeta } from "../components/HeadMeta";
 import { LoginScreen, logoutAndReload } from "../components/LoginScreen";
 import { feed, server } from "../server";
 

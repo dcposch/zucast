@@ -1,4 +1,4 @@
-import { Cookie } from "src/common/constants";
+import { Cookie } from "../common/constants";
 
 /** Gets a cookie by name */
 export function getCookie(key: Cookie): string | undefined {

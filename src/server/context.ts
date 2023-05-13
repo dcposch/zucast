@@ -1,7 +1,7 @@
 import { inferAsyncReturnType } from "@trpc/server";
 import * as trpcNext from "@trpc/server/adapters/next";
-import { Cookie } from "src/common/constants";
 import { auth } from ".";
+import { Cookie } from "../common/constants";
 
 export async function createContext({
   req,

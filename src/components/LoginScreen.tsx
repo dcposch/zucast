@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { setCookie } from "src/client/cookie";
 import { useZupass } from "zukit";
+import { setCookie } from "../client/cookie";
 import { trpc } from "../client/trpc";
 import { Cookie } from "../common/constants";
 import { KeyPair } from "../common/crypto";

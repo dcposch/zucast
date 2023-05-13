@@ -1,6 +1,6 @@
-import { User, UserProfile } from "../common/model";
 import classNames from "classnames";
 import { useMemo } from "react";
+import { User, UserProfile } from "../common/model";
 
 export function UserIcon({
   user,

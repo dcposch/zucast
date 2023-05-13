@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
+import { useSelf } from "../client/self";
 import { User } from "../common/model";
 import { ButtonSmall } from "./Button";
 import { EditProfileScreen } from "./EditProfileScreen";
 import { Modal } from "./Modal";
 import { UserIcon } from "./UserIcon";
 import { H1 } from "./typography";
-import { useSelf } from "src/client/self";
 
 /** Display a user profile an Posts, Replies, Likes tabs. */
 export function UserDetails({ tab, user }: { tab: string; user: User }) {

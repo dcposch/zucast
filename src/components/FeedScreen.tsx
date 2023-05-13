@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useCallback } from "react";
-import { useRestoreScroll } from "src/client/useRestoreScroll";
 import { useEscape } from "../client/hooks";
+import { useRestoreScroll } from "../client/useRestoreScroll";
 import { NoteSummary, SortAlgo, Thread, User } from "../common/model";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";

@@ -1,9 +1,9 @@
+import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { sign } from "../common/crypto";
 import { Action } from "../common/model";
 import { useSelf } from "./self";
 import { trpc } from "./trpc";
-import { useRouter } from "next/router";
 
 /** Sign an action (cast, like, etc), append to the global log. */
 export function useSendAction() {

@@ -8,16 +8,15 @@ import classNames from "classnames";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { MouseEvent, useCallback, useEffect, useState } from "react";
-import { calcPostShareToken } from "src/common/crypto";
 import { useModal, useSendAction } from "../client/hooks";
+import { plural } from "../client/string";
+import { calcPostShareToken } from "../common/crypto";
 import { Post } from "../common/model";
+import { ButtonSmall } from "./Button";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Modal } from "./Modal";
 import { PostLikersScreen } from "./PostLikersScreen";
 import { UserIcon } from "./UserIcon";
-import { Button, ButtonSmall } from "./Button";
-import { plural } from "src/client/string";
-import { useSelf } from "src/client/self";
 
 export function PostBox({
   post,

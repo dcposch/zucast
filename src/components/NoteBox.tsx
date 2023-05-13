@@ -2,10 +2,10 @@ import { HeartFillIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import { useRouter } from "next/router";
 import { MouseEvent, useCallback } from "react";
+import { plural } from "../client/string";
 import { NoteSummary } from "../common/model";
 import { PostBox } from "./PostBox";
 import { UserIcon } from "./UserIcon";
-import { plural } from "src/client/string";
 
 export function NoteBox({ summary }: { summary: NoteSummary }) {
   // Link to the post

@@ -1,9 +1,9 @@
 import { GetServerSideProps, Redirect } from "next";
-import { HeadMeta } from "src/components/HeadMeta";
 import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
 import { NoteSummary, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
+import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
 
 interface NotesPageProps {

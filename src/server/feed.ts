@@ -23,10 +23,10 @@ import {
   User,
   actionModel,
 } from "../common/model";
+import { getSortFunc, scoreSelfBoost } from "../common/sort";
 import { time } from "../common/util";
 import { validatePost, validateProfile } from "../common/validation";
 import { TypedEvent } from "./event";
-import { getSortFunc, scoreSelfBoost } from "src/common/sort";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */

@@ -1,8 +1,8 @@
 import classNames from "classnames";
 import { useRouter } from "next/router";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
-import { useSelf } from "src/client/self";
 import { useSendAction } from "../client/hooks";
+import { useSelf } from "../client/self";
 import { MAX_POST_LENGTH } from "../common/constants";
 import { Action, Post } from "../common/model";
 import { Button } from "./Button";

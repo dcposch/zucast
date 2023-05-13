@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { THEME_COLORS } from "src/common/constants";
+import { THEME_COLORS } from "../common/constants";
 
 export function HeadMeta({
   title,

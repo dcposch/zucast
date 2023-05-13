@@ -1,10 +1,10 @@
 import { GetServerSideProps, Redirect } from "next";
-import { truncate } from "src/client/string";
-import { HeadMeta } from "src/components/HeadMeta";
 import { SelfProvider } from "../../client/self";
+import { truncate } from "../../client/string";
 import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
+import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
 
 interface PostPageProps {

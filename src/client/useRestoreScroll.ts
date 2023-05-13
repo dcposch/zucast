@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 // Don't preserve across hard refresh.
 let savedScrollPos = 0;

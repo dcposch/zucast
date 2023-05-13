@@ -1,10 +1,10 @@
 import { ClockIcon, FlameIcon, NorthStarIcon } from "@primer/octicons-react";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
-import { setCookie } from "src/client/cookie";
-import { useModal } from "src/client/hooks";
-import { Cookie } from "src/common/constants";
-import { SortAlgo } from "src/common/model";
+import { setCookie } from "../client/cookie";
+import { useModal } from "../client/hooks";
+import { Cookie } from "../common/constants";
+import { SortAlgo } from "../common/model";
 import { ButtonOption, ButtonSmall } from "./Button";
 import { Modal } from "./Modal";
 

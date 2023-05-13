@@ -1,5 +1,5 @@
-import { EXTERNAL_NULLIFIER } from "../common/constants";
 import { ZupassLoginButton } from "zukit";
+import { EXTERNAL_NULLIFIER } from "../common/constants";
 
 export function LoginButton({ pubKeyHash }: { pubKeyHash: bigint }) {
   return (

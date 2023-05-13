@@ -3,9 +3,8 @@ import { SelfProvider } from "../../client/self";
 import { useSigningKey } from "../../common/crypto";
 import { Thread, User } from "../../common/model";
 import { FeedScreen } from "../../components/FeedScreen";
+import { HeadMeta } from "../../components/HeadMeta";
 import { feed, server } from "../../server";
-import Head from "next/head";
-import { HeadMeta } from "src/components/HeadMeta";
 
 interface UserPageProps {
   user: User;
