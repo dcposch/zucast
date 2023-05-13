@@ -13,7 +13,7 @@ describe("Feed", function () {
   it("loads the transaction log", async () => {
     const feed = await initOnly([sampleAddKey(), samplePost()]);
 
-    const threads = feed.loadGlobalFeed(0);
+    const threads = feed.loadGlobalFeed(0, "latest");
     assert.equal(threads.length, 1);
     assert.equal(threads[0].posts[0].content, "testing 123");
   });

@@ -10,16 +10,20 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect } from "react";
 import { useNotes, useSelf } from "src/client/self";
 import { LOGO_160, THEME_COLORS } from "src/common/constants";
+import { SortAlgo } from "src/common/model";
 import { Button, ButtonSmall, LinkSquare } from "./Button";
 import { FeedType } from "./FeedScreen";
+import { SortAlgoButton } from "./SortAlgoButton";
 import { H2 } from "./typography";
 
 export function FeedHeader({
   feed,
   showCompose,
+  sortAlgo,
 }: {
   feed: FeedType;
   showCompose: () => void;
+  sortAlgo: SortAlgo;
 }) {
   const self = useSelf();
   if (!self) throw new Error("unreachable");
@@ -54,11 +58,12 @@ export function FeedHeader({
   const logo = <Image src={LOGO_160} width={40} height={40} alt="Logo" />;
 
   return (
-    <header className="flex justify-between items-center py-3 bg-midnight sticky top-0">
+    <header className="flex justify-between items-center py-3 bg-midnight">
       <H2>
         <div className="w-[10rem] flex items-center gap-2">
           {feed.type !== "home" && <LinkSquare href="/">&laquo;</LinkSquare>}
           {feed.type === "home" && "Home"}
+          {feed.type === "home" && <SortAlgoButton {...{ sortAlgo }} />}
           {feed.type === "thread" && "Thread"}
           {feed.type === "notes" && "Notes"}
           {feed.type === "profile" && `#${feed.profileUser.uid}`}

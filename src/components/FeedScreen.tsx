@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { useCallback } from "react";
 import { useRestoreScroll } from "src/client/useRestoreScroll";
 import { useEscape } from "../client/hooks";
-import { NoteSummary, Thread, User } from "../common/model";
+import { NoteSummary, SortAlgo, Thread, User } from "../common/model";
 import { ComposeScreen, useComposeModal } from "./ComposeScreen";
 import { Container } from "./Container";
 import { FeedHeader } from "./FeedHeader";
@@ -30,9 +30,11 @@ export type FeedType =
 export function FeedScreen({
   feed,
   threads,
+  sortAlgo,
 }: {
   feed: FeedType;
   threads: Thread[];
+  sortAlgo?: SortAlgo;
 }) {
   // Compose modal
   const { isOpen, showCompose, hideCompose, postSucceeded } = useComposeModal();
@@ -51,6 +53,9 @@ export function FeedScreen({
   // Restore scroll on nav
   useRestoreScroll();
 
+  // On home screen, display chosen sort algo
+  sortAlgo = sortAlgo || "hot";
+
   console.log(`[FEED] ${feed.type} rendering ${threads.length} threads`);
 
   return (
@@ -61,7 +66,7 @@ export function FeedScreen({
         </Modal>
       )}
       <Container>
-        <FeedHeader feed={feed} showCompose={showCompose} />
+        <FeedHeader {...{ feed, showCompose, sortAlgo }} />
         <main className="flex flex-col pb-32">
           {feed.type === "profile" && (
             <UserDetails tab={feed.tab} user={feed.profileUser} />

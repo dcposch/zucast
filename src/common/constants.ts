@@ -1,4 +1,7 @@
-export const COOKIE_ZUCAST_TOKEN = "zucastToken";
+export enum Cookie {
+  ZucastToken = "zucastToken",
+  SortAlgo = "sortAlgo",
+}
 
 export const EXTERNAL_NULLIFIER = BigInt(420);
 

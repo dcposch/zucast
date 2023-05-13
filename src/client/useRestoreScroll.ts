@@ -18,7 +18,10 @@ export function useRestoreScroll() {
     };
 
     // Restore scroll pos
-    if (savedScrollPos) document.documentElement.scrollTop = savedScrollPos;
+    if (savedScrollPos) {
+      console.log(`Restoring scroll position ${savedScrollPos}`);
+      document.documentElement.scrollTop = savedScrollPos;
+    }
 
     router.events.on("routeChangeStart", saveScrollPos);
     return () => router.events.off("routeChangeStart", saveScrollPos);

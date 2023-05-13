@@ -19,7 +19,6 @@ export function useSigningKey() {
 
   // Generate an ECDSA (P256) signing keypair, plus BJJ hash of the public key
   useEffect(() => {
-    console.log(`[CRYPTO] loading or creating signing key`);
     (async () => {
       // How do people still use Brave?
       if (window.localStorage == null) {

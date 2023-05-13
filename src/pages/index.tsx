@@ -1,11 +1,12 @@
 import { GetServerSideProps } from "next";
 import { useEffect } from "react";
+import { parseSortAlgo } from "src/common/sort";
 import { HeadMeta } from "src/components/HeadMeta";
 import { useZupass } from "zukit";
 import { SelfProvider } from "../client/self";
-import { EXTERNAL_NULLIFIER } from "../common/constants";
+import { Cookie, EXTERNAL_NULLIFIER } from "../common/constants";
 import { useSigningKey } from "../common/crypto";
-import { Thread, User } from "../common/model";
+import { SortAlgo, Thread, User } from "../common/model";
 import { FeedScreen } from "../components/FeedScreen";
 import { LoginScreen, logoutAndReload } from "../components/LoginScreen";
 import { feed, server } from "../server";
@@ -13,9 +14,10 @@ import { feed, server } from "../server";
 interface HomePageProps {
   user: User | null;
   threads: Thread[];
+  sortAlgo: SortAlgo;
 }
 
-export default function HomePage({ user, threads }: HomePageProps) {
+export default function HomePage({ user, threads, sortAlgo }: HomePageProps) {
   const signingKey = useSigningKey();
   const [zupass] = useZupass();
 
@@ -29,7 +31,7 @@ export default function HomePage({ user, threads }: HomePageProps) {
     return (
       <SelfProvider {...{ user, signingKey }}>
         <HeadMeta />
-        <FeedScreen feed={{ type: "home" }} threads={threads} />
+        <FeedScreen feed={{ type: "home" }} {...{ threads, sortAlgo }} />
       </SelfProvider>
     );
   }
@@ -42,9 +44,10 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
   const user = await server.authenticateRequest(context.req);
 
   // Load posts only if logged in
-  const threads = user == null ? [] : feed.loadGlobalFeed(user.uid);
+  const sortAlgo = parseSortAlgo(context.req.cookies[Cookie.SortAlgo]);
+  const threads = user == null ? [] : feed.loadGlobalFeed(user.uid, sortAlgo);
 
-  return { props: { user, threads } };
+  return { props: { user, threads, sortAlgo } };
 };
 
 function logoutIfInvalidPCD(zupass: ReturnType<typeof useZupass>[0]) {

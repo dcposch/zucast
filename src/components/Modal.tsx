@@ -10,7 +10,7 @@ export function Modal({
   onClose,
 }: {
   children: React.ReactNode;
-  title: string;
+  title: React.ReactNode;
   onClose: () => void;
 }) {
   // Close on escape
@@ -40,7 +40,7 @@ export function Modal({
   }, [modalRef]);
 
   return (
-    <div className="w-full h-full min-h-screen absolute left-0 top-0 bg-[rgba(0,0,0,0.5)] z-10 overflow-scroll">
+    <div className="w-full h-full min-h-screen absolute left-0 top-0 bg-[rgba(0,0,0,0.5)] z-10">
       <Container>
         {offset != null && (
           <div className="py-4" ref={modalRef} style={offset}>

@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
+  background: hsl(263 36% 10%);
   min-width: 320px;
   font: 16px system-ui, sans-serif;
-  background: hsl(263 36% 10%);
+  line-height: 1.25;
   color: #fff;
 }
 

@@ -107,3 +107,12 @@ export type TransactionAddKey = {
   pcd: string;
   pubKeyHex: string;
 };
+
+export const sortAlgoModel = z.union([
+  z.literal("hot"),
+  z.literal("latest"),
+  z.literal("custom"),
+]);
+
+/** User-selectable feed sorting algorithm. */
+export type SortAlgo = z.infer<typeof sortAlgoModel>;

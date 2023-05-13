@@ -1,12 +1,12 @@
 import { inferAsyncReturnType } from "@trpc/server";
-import { auth } from ".";
 import * as trpcNext from "@trpc/server/adapters/next";
-import { COOKIE_ZUCAST_TOKEN } from "src/common/constants";
+import { Cookie } from "src/common/constants";
+import { auth } from ".";
 
 export async function createContext({
   req,
 }: trpcNext.CreateNextContextOptions) {
-  const cookie = req.cookies[COOKIE_ZUCAST_TOKEN];
+  const cookie = req.cookies[Cookie.ZucastToken];
   const authUID = auth.authenticate(cookie);
   return { authUID };
 }

@@ -1,18 +1,18 @@
-import { trpc } from "../client/trpc";
-import { COOKIE_ZUCAST_TOKEN } from "../common/constants";
-import { KeyPair } from "../common/crypto";
 import Image from "next/image";
-import { useEffect } from "react";
-import { useZupass } from "zukit";
-import { LoginButton } from "./LoginButton";
-import { Container } from "./Container";
-import Head from "next/head";
-import { H1 } from "./typography";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
+import { setCookie } from "src/client/cookie";
+import { useZupass } from "zukit";
+import { trpc } from "../client/trpc";
+import { Cookie } from "../common/constants";
+import { KeyPair } from "../common/crypto";
+import { Container } from "./Container";
 import { HeadMeta } from "./HeadMeta";
+import { LoginButton } from "./LoginButton";
+import { H1 } from "./typography";
 
 export function logoutAndReload() {
-  setCookie();
+  setCookie(Cookie.ZucastToken, null);
   localStorage.clear();
   window.location.reload();
 }
@@ -22,7 +22,7 @@ export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
   const login = trpc.login.useMutation();
 
   // Delete stale cookies, if any
-  useEffect(() => setCookie(), []);
+  useEffect(() => setCookie(Cookie.ZucastToken, null), []);
 
   // Once we have a proof from the Zuzalu Passport, upload our signing key
   useEffect(() => {
@@ -41,7 +41,7 @@ export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
     if (login.isSuccess) {
       const token = login.data;
       console.log(`[LOGIN] setting cookie ${token}`);
-      setCookie(token);
+      setCookie(Cookie.ZucastToken, token);
 
       // Load the feed
       router.replace(router.asPath);
@@ -91,13 +91,4 @@ export function LoginScreen({ signingKey }: { signingKey?: KeyPair }) {
       </Container>
     </>
   );
-}
-
-/** Sets or clears the auth cookie */
-function setCookie(value?: string) {
-  const expiry =
-    value == null
-      ? `expires=Thu, 01 Jan 1970 00:00:01 GMT`
-      : `expires=Fri, 31 Dec 9999 23:59:59 GMT`;
-  document.cookie = `${COOKIE_ZUCAST_TOKEN}=${value || ""}; path=/; ${expiry}`;
 }

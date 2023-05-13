@@ -1,10 +1,10 @@
-import { COOKIE_ZUCAST_TOKEN } from "../common/constants";
-import { User } from "../common/model";
 import { GetServerSidePropsContext } from "next";
+import { Cookie } from "../common/constants";
+import { calcPostShareToken, preloadLatestRoot } from "../common/crypto";
+import { User } from "../common/model";
 import { ZucastAuth } from "./auth";
 import { DB } from "./db";
 import { ZucastFeed } from "./feed";
-import { calcPostShareToken, preloadLatestRoot } from "../common/crypto";
 
 interface InitStatus {
   elapsedMs: number;
@@ -64,7 +64,7 @@ class ZucastServer {
 
   /** Cookie authentication */
   async authenticateRequest(req: GetServerSidePropsContext["req"]) {
-    const token = req.cookies[COOKIE_ZUCAST_TOKEN];
+    const token = req.cookies[Cookie.ZucastToken];
     await this.waitForInit();
 
     const loggedInUid = auth.authenticate(token);

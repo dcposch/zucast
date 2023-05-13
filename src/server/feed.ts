@@ -15,6 +15,7 @@ import {
   NoteSummary,
   Notification,
   Post,
+  SortAlgo,
   Thread,
   Transaction,
   TransactionAct,
@@ -25,6 +26,7 @@ import {
 import { time } from "../common/util";
 import { validatePost, validateProfile } from "../common/validation";
 import { TypedEvent } from "./event";
+import { getSortFunc, scoreSelfBoost } from "src/common/sort";
 
 export interface FeedUser extends User {
   /** Public keys for signing actions */
@@ -91,6 +93,8 @@ export class ZucastFeed {
   private feedUsersByPubKeyHex: Map<string, FeedUser> = new Map();
   /** Their posts */
   private feedPosts: FeedPost[] = [];
+  /** Last n threads */
+  private recentThreads: FeedPost[] = [];
 
   /** Initializes the feed from a list of stored actions */
   async init(transactions: Transaction[]) {
@@ -137,23 +141,24 @@ export class ZucastFeed {
   }
 
   /** Generates a feed of recent posts, newest to oldest. */
-  loadGlobalFeed(authUID: number): Thread[] {
+  loadGlobalFeed(authUID: number, algo: SortAlgo): Thread[] {
+    const threads = this.recentThreads.map((p) => ({
+      rootID: p.id,
+      posts: p.replies.map((r) => this.toPost(authUID, r)),
+    }));
+
     // The Algorithm™
-    const threadIDs = new Set<number>();
-    const ret = this.feedPosts
-      .slice(-300)
-      .reverse()
-      .filter((p) => {
-        const alreadyIncluded = threadIDs.has(p.rootID);
-        threadIDs.add(p.rootID);
-        return !alreadyIncluded;
-      })
-      .slice(0, 100)
-      .map((p) => this.feedPosts[p.rootID])
-      .map<Thread>((p) => ({
-        rootID: p.id,
-        posts: p.replies.map((p) => this.toPost(authUID, p)),
-      }));
+    const sortFunc = getSortFunc(algo);
+
+    // Regardless of sort, boost our own very-recent posts to the top.
+    const now = Date.now();
+    const score = (a: Thread) => sortFunc(a) + scoreSelfBoost(a, authUID, now);
+
+    threads.sort((a, b) => score(b) - score(a));
+
+    // Finally, send a reasonable-length list.
+    const ret = threads.slice(0, 70);
+
     console.log(`[FEED] generated global feed, ${ret.length} threads`);
     return ret;
   }
@@ -532,6 +537,13 @@ export class ZucastFeed {
     if (feedPost.parentID != null) {
       this.feedPosts[feedPost.parentID].nDirectReplies++;
     }
+
+    // Update latest threads
+    const rootPost = this.feedPosts[feedPost.rootID];
+    const ix = this.recentThreads.findIndex((p) => p.id == rootPost.id);
+    if (ix >= 0) this.recentThreads.splice(ix, 1);
+    else if (this.recentThreads.length > 100) this.recentThreads.pop();
+    this.recentThreads.unshift(rootPost);
 
     return feedPost;
   }

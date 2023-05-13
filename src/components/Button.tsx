@@ -18,11 +18,25 @@ bg-transparent hover:bg-white-hov active:bg-white-act
 disabled:bg-transparent disabled:opacity-75 disabled:cursor-default
 `;
 
+const roundedOption = `
+rounded-md font-semibold
+bg-transparent hover:bg-white-hov active:bg-white-act
+border border-transparent 
+disabled:bg-white-act disabled:border-gray disabled:cursor-default
+`;
+
 export function ButtonSmall(
   props: JSX.IntrinsicElements["button"] & { size?: string }
 ) {
   const size = props.size || `px-4 py-2 text-center`;
   return <button {...props} className={`${size} ${roundedLight}`} />;
+}
+
+export function ButtonOption(
+  props: JSX.IntrinsicElements["button"] & { size?: string }
+) {
+  const size = props.size || `px-4 py-2 text-center`;
+  return <button {...props} className={`${size} ${roundedOption}`} />;
 }
 
 export function ButtonSquare(props: JSX.IntrinsicElements["button"]) {
