@@ -87,9 +87,9 @@ function SortAlgoOpt({
 function getSortNameDesc(algo: SortAlgo) {
   switch (algo) {
     case "hot":
-      return ["Hot", "A balance of recent and popular"];
+      return ["Best", "A balance of recent and popular"];
     case "latest":
-      return ["Chrono", "Latest posts show up first"];
+      return ["Latest", "Most recent posts first"];
     default:
       return ["Custom", "Define your own feed"];
   }

@@ -26,7 +26,6 @@ export function FeedHeader({
   sortAlgo: SortAlgo;
 }) {
   const user = useUser();
-  if (!user) throw new Error("unreachable");
 
   // Navigation
   const uid = user?.uid;
